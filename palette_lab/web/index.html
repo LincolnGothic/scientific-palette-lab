@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17243a">
+  <title>Chromatic · Scientific Palette Lab</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/" aria-label="Chromatic home"><span class="brand-mark"><i></i><i></i><i></i></span><span>Chromatic<small>SCIENTIFIC PALETTE LAB</small></span></a>
+    <div class="nav-label">WORKSPACE</div>
+    <nav aria-label="Main navigation">
+      <button class="nav-item active" data-view="atlas"><span>▦</span> Palette atlas</button>
+      <button class="nav-item" data-view="recommend"><span>✧</span> Recommendations</button>
+      <button class="nav-item" data-view="review"><span>◉</span> Review queue <b id="queueBadge">0</b></button>
+      <button class="nav-item" data-view="collect"><span>↓</span> Collect articles</button>
+      <button class="nav-item" data-view="methods"><span>≡</span> Methods & sources</button>
+    </nav>
+    <div class="scope-card"><span class="eyebrow">THREE JOURNALS. ONE STUDY.</span><div class="journal-wordmarks"><span>Nature</span><span>Science</span><span>Cell</span></div><p>Flagship journals only<br>Default window · 2021–2025</p></div>
+    <div class="dataset-control"><label for="dataset">DATASET</label><select id="dataset"><option value="real">Publication corpus</option><option value="demo">Synthetic examples</option></select><p id="datasetNote">Only reviewed, eligible panels enter the rankings.</p></div>
+    <div class="sidebar-footer"><span class="status-dot"></span> Local workspace <span>v0.1</span></div>
+  </aside>
+  <main>
+    <header class="topbar"><span>Research tools <span class="slash">/</span> <strong id="breadcrumb">Palette atlas</strong></span><span class="top-right">Nature · Science · Cell <span class="pill">LOCAL</span></span></header>
+    <div id="demoBanner" class="demo-banner" hidden>SYNTHETIC EXAMPLES · These illustrations demonstrate the software and are not findings from journal articles.</div>
+    <div class="page-content">
+      <div class="page-heading"><div><span class="eyebrow" id="pageEyebrow">THE RESEARCH PALETTE ATLAS</span><h1 id="pageTitle">Color, with context.</h1><p id="pageDescription">Discover how color is used in scientific figures, with a source behind every palette.</p></div><button class="button primary" data-view="collect">＋ Collect articles</button></div>
+      <div class="workspace-tools"><div class="segmented" aria-label="Figure category"><button data-kind="data" class="active">▥ Data charts</button><button data-kind="flowchart">⌘ Flowcharts</button></div><div class="kind-note" id="kindNote">Colors encode categories or numeric values.</div></div>
+      <div id="content" aria-live="polite"></div>
+    </div>
+  </main>
+  <div id="toast" role="status" hidden></div>
+</body>
+</html>

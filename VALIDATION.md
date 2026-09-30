@@ -2,6 +2,8 @@
 
 ## Implementation checks
 
+- **Startup regression checks passed:** bringing the automated total to **29 tests**. A real occupied localhost port produces an actionable message and exit status 1 without a traceback; the existing listener remains available. A separate temporary instance starts on an OS-assigned port and serves the application successfully. The earlier development preview occupying port 8765 was stopped.
+
 - **27 automated unittest cases passed.** Covered CIELAB reference values, raster extraction, meaningful neutral colors, categorical/ordered/role-aware matching, one-to-one color matching, flagship ISSNs, main/extended/floated JATS figures, current S3 URI conversion, published/manuscript version selection, collector idempotency, eligibility gates, paper-versus-panel votes, color-count denominators, real/demo separation, complete-link grouping, stale review rejection, re-extraction approval reset, bounded/nonoverlapping panel splitting, recommendation origin labels, locked-color constraints, bootstrap reproducibility, local upload deduplication, DOI normalization, source snapshot changes, and manuscript opt-in.
 - **JavaScript syntax check passed** using `node --check palette_lab/web/app.js`.
 - **Local HTTP checks passed:** state, reviewed-publication gates, separate data/flowchart statistics, recommendations for every color count from 3 through 8 in both categories, source-backed CSV/JSON exports, and host/origin rejection.

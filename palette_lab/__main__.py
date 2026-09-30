@@ -1,4 +1,5 @@
 import argparse
+import errno
 import json
 
 from .app import serve
@@ -28,7 +29,16 @@ def main():
     if args.command == "serve":
         if args.demo:
             seed_demo(store)
-        serve(store, args.port)
+        try:
+            serve(store, args.port)
+        except OSError as exc:
+            if exc.errno != errno.EADDRINUSE:
+                raise
+            alternate_port = args.port + 1 if args.port < 65535 else 8765
+            parser.exit(1, f"Port {args.port} is already in use.\n"
+                          f"If Scientific Palette Lab is already running, open http://127.0.0.1:{args.port}.\n"
+                          "Otherwise stop the process using this port or choose another port:\n"
+                          f"  bash run.sh serve --port {alternate_port}\n")
     elif args.command == "demo":
         seed_demo(store)
         print("Synthetic examples generated; the real corpus is unchanged.")

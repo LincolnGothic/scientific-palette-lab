@@ -13,6 +13,8 @@ bash run.sh
 
 Open **http://127.0.0.1:8765**. Only NumPy and Pillow are needed; no API key, external database, JavaScript build, or paid model is required. `run.sh` can also use an existing Codex bundled Python runtime containing these dependencies.
 
+If startup reports that port 8765 is already in use, an earlier instance may still be running. Open the URL above to use that instance, stop it with Ctrl+C in its terminal, or start another instance with `bash run.sh serve --port 8766`. The program reports the conflict without a traceback and does not stop the existing service.
+
 ```bash
 # Optional separately labeled synthetic illustrations
 bash run.sh serve --demo

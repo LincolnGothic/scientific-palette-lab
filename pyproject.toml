@@ -14,3 +14,6 @@ palette-lab = "palette_lab.__main__:main"
 
 [tool.setuptools.package-data]
 palette_lab = ["web/*"]
+
+[tool.setuptools.packages.find]
+include = ["palette_lab*"]

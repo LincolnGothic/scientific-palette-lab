@@ -1,0 +1,22 @@
+# Single password-protected workspace. Review Render's displayed costs before creating.
+services:
+  - type: web
+    name: scientific-palette-lab
+    runtime: docker
+    plan: 0.5c-512mb
+    branch: main
+    healthCheckPath: /health
+    numInstances: 1
+    envVars:
+      - key: PALETTE_HOST
+        value: 0.0.0.0
+      - key: PALETTE_DATA_DIR
+        value: /var/data
+      - key: PALETTE_WEB_USERNAME
+        value: researcher
+      - key: PALETTE_WEB_PASSWORD
+        sync: false
+    disk:
+      name: research-corpus
+      mountPath: /var/data
+      sizeGB: 1

@@ -2,6 +2,8 @@
 
 ## Implementation checks
 
+- **Hosted-mode checks passed:** the automated total is now **35 tests**, including password gating for UI/API/assets/exports, malformed credentials, external host/origin checks, minimal health response, and corpus survival across a server restart. JavaScript syntax and Python wheel packaging checks pass. The Render Blueprint parses with one instance, a persistent disk, and a required secret input. Docker is unavailable on this machine, so a container build and live deployment remain unverified. No hosting service or charges were activated.
+
 - **Startup regression checks passed:** bringing the automated total to **29 tests**. A real occupied localhost port produces an actionable message and exit status 1 without a traceback; the existing listener remains available. A separate temporary instance starts on an OS-assigned port and serves the application successfully. The earlier development preview occupying port 8765 was stopped.
 
 - **27 automated unittest cases passed.** Covered CIELAB reference values, raster extraction, meaningful neutral colors, categorical/ordered/role-aware matching, one-to-one color matching, flagship ISSNs, main/extended/floated JATS figures, current S3 URI conversion, published/manuscript version selection, collector idempotency, eligibility gates, paper-versus-panel votes, color-count denominators, real/demo separation, complete-link grouping, stale review rejection, re-extraction approval reset, bounded/nonoverlapping panel splitting, recommendation origin labels, locked-color constraints, bootstrap reproducibility, local upload deduplication, DOI normalization, source snapshot changes, and manuscript opt-in.

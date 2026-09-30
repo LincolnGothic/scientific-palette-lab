@@ -1,20 +1,24 @@
 import argparse
 import errno
 import json
+import os
 
 from .app import serve
 from .config import Study, data_root
 from .corpus import collect
 from .demo import seed_demo
+from .hosting import WebAccess
 from .store import Store
 
 
 def main():
     parser = argparse.ArgumentParser(description="Reviewed palette analysis for Nature, Science, and Cell")
-    parser.add_argument("--data-dir", default=None)
+    parser.add_argument("--data-dir", default=os.environ.get("PALETTE_DATA_DIR"))
     sub = parser.add_subparsers(dest="command", required=True)
     web = sub.add_parser("serve", help="Open the local review and analysis application")
-    web.add_argument("--port", type=int, default=8765)
+    web.add_argument("--port", type=int, default=int(os.environ.get("PORT", "8765")))
+    web.add_argument("--host", default=os.environ.get("PALETTE_HOST", "127.0.0.1"))
+    web.add_argument("--external-url", default=os.environ.get("PALETTE_EXTERNAL_URL") or os.environ.get("RENDER_EXTERNAL_URL", ""))
     web.add_argument("--demo", action="store_true", help="Create separately labeled synthetic examples")
     fetch = sub.add_parser("collect", help="Collect a limited OA pilot using Europe PMC and PMC S3")
     fetch.add_argument("--start-year", type=int, default=2021)
@@ -30,7 +34,11 @@ def main():
         if args.demo:
             seed_demo(store)
         try:
-            serve(store, args.port)
+            access = WebAccess(args.external_url, os.environ.get("PALETTE_WEB_USERNAME", "researcher"),
+                               os.environ.get("PALETTE_WEB_PASSWORD", ""))
+            serve(store, args.port, args.host, access)
+        except ValueError as exc:
+            parser.exit(1, f"Cannot start the web application: {exc}\n")
         except OSError as exc:
             if exc.errno != errno.EADDRINUSE:
                 raise

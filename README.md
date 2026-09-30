@@ -4,6 +4,8 @@ A local Python application for collecting and reviewing figure palettes from the
 
 ## Run
 
+For a clickable hosted website with the full Python application, see [web hosting instructions](docs/HOSTING.md). A Render Docker Blueprint with persistent storage and password protection is included; deploying it requires a hosting account and approval of the provider's charges. GitHub Pages alone cannot run the Python backend.
+
 ```bash
 cd scientific_palette_lab
 python3 -m venv .venv
@@ -92,7 +94,7 @@ Color-vision previews use Machado et al. full-dichromacy linear-RGB matrices. Δ
 - **Licenses:** Published-version license codes are recorded. The collector accepts licensed PMC OA material, including noncommercial/restricted license types; users must respect the specific license for their reuse or redistribution. Importing a local image does not prove its license. The app is local and does not publish or share source figures automatically.
 - **Current retrieval service:** Uses the versioned PMC S3 structure documented in 2026, not the retired OA package lookup API. Version metadata distinguishes author manuscripts from final published articles; the largest version is not blindly assumed to be a published version. Download URLs are limited to the official services, bounded, retried, and verified against supplied MD5 checksums.
 - **Storage:** `data/corpus.sqlite3`, `data/assets/`, downloaded JATS/metadata snapshots, image SHA-256, source URLs, extraction parameters, and review snapshots. The real and synthetic datasets remain separate. No real ranking is populated from demo data or built-in reference palettes.
-- **Local server:** Binds to loopback only and checks request host/origin. It is a personal research tool, not an authenticated multiuser deployment. Uploaded images are size-limited. The browser uses local assets with no external JavaScript/font dependencies.
+- **Server access:** Local startup binds to loopback and checks request host/origin. Hosted mode supports one password-protected shared workspace behind an HTTPS reverse proxy; it does not provide separate user accounts or isolated datasets. Uploaded images are size-limited. The browser uses local assets with no external JavaScript/font dependencies. See [hosting configuration](docs/HOSTING.md).
 - **First-release boundaries:** No trained vision classifier, OCR legend segmentation, automatic semantic role recognition, vector/PDF color recovery, publisher-specific fallback, trained recommender, or comprehensive five-year statistical findings. Caption-based classification and whitespace splitting are review suggestions. Raster HEX values may be estimates. If assets are absent from the approved services, import an authorized figure image and record its source.
 
 Recommended next development: build a stratified, manually annotated benchmark covering years, journals, chart types, diagrams, neutral controls, gradients, and transparency. Measure panel recall, classification error, palette-size accuracy, and color matching error; evaluate on held-out papers. Use those measured errors to decide whether to add a trained detector, vector parsing, or a learned ranking model.

@@ -19,6 +19,7 @@ from .config import JOURNALS, Study
 from .corpus import collect, save_image
 from .demo import seed_demo
 from .figures import suggest_panels, validate_bbox
+from .hosting import WebAccess
 from .recommend import recommend
 from .statistics import families, eligible_panels
 
@@ -121,11 +122,12 @@ class Application:
         raise ValueError("Unknown API operation.")
 
 
-def handler_for(app):
+def handler_for(app, access=None):
+    access = access or WebAccess()
     class Handler(BaseHTTPRequestHandler):
         server_version = "PaletteLab/0.1"
 
-        def send(self, status, body, content_type="application/json; charset=utf-8", filename=None):
+        def send(self, status, body, content_type="application/json; charset=utf-8", filename=None, headers=None):
             if not isinstance(body, bytes):
                 body = json.dumps(body, ensure_ascii=False, allow_nan=False).encode()
             self.send_response(status)
@@ -136,21 +138,29 @@ def handler_for(app):
             self.send_header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'")
             if filename:
                 self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+            for name, value in (headers or {}).items():
+                self.send_header(name, value)
             self.end_headers()
             self.wfile.write(body)
 
         def permitted(self):
-            port = self.server.server_port
-            host = self.headers.get("Host", "")
-            allowed_hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
-            if host not in allowed_hosts:
-                return False
-            origin = self.headers.get("Origin")
-            return not origin or origin in {f"http://{h}" for h in allowed_hosts}
+            return access.permitted(self.headers.get("Host", ""), self.headers.get("Origin"), self.server.server_port)
+
+        def authenticated(self):
+            if access.authenticated(self.headers.get("Authorization")):
+                return True
+            self.close_connection = True
+            self.send(401, {"error": "Sign in to access this research workspace."},
+                      headers={"WWW-Authenticate": 'Basic realm="Scientific Palette Lab", charset="UTF-8"'})
+            return False
 
         def do_GET(self):
             if not self.permitted():
-                return self.send(403, {"error": "Local requests only."})
+                return self.send(403, {"error": "Request host or origin is not allowed."})
+            if self.path == "/health":
+                return self.send(200, {"status": "ok"})
+            if not self.authenticated():
+                return
             try:
                 parsed = urllib.parse.urlparse(self.path)
                 route = parsed.path
@@ -204,6 +214,8 @@ def handler_for(app):
         def do_POST(self):
             if not self.permitted() or not self.headers.get("Content-Type", "").startswith("application/json"):
                 return self.send(403, {"error": "Same-origin JSON requests only."})
+            if not self.authenticated():
+                return
             try:
                 length = int(self.headers.get("Content-Length", "0"))
                 if not 0 < length <= 24_000_000:
@@ -224,9 +236,11 @@ def handler_for(app):
     return Handler
 
 
-def serve(store, port=8765):
-    server = ThreadingHTTPServer(("127.0.0.1", port), handler_for(Application(store)))
-    print(f"Scientific Palette Lab → http://127.0.0.1:{server.server_port}", flush=True)
+def serve(store, port=8765, host="127.0.0.1", access=None):
+    access = (access or WebAccess()).validate(host)
+    server = ThreadingHTTPServer((host, port), handler_for(Application(store), access))
+    url = access.external_url.rstrip("/") or f"http://127.0.0.1:{server.server_port}"
+    print(f"Scientific Palette Lab → {url}", flush=True)
     print(f"Corpus: {store.path}", flush=True)
     try:
         server.serve_forever()

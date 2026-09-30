@@ -21,7 +21,7 @@ const pageInfo = {
 async function api(path, body) {
   let response;
   try {response=await fetch(path, body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});}
-  catch {throw new Error('The local application is unavailable. Restart it with bash run.sh, then reload this page.');}
+  catch {throw new Error('The application is unavailable. Reload the page or check that the server is running.');}
   const result=await response.json();
   if(!response.ok) throw new Error(result.error || `Request failed (${response.status})`);
   return result;

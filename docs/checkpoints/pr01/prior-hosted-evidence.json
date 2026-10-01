@@ -1,0 +1,38 @@
+{
+  "run_url": "https://github.com/LincolnGothic/scientific-palette-lab/actions/runs/36867648093",
+  "implementation_head": "07f694c20b83ec09d0ff467196875cec97d63989",
+  "actual_tested_sha": "921941d024e885bbe13688b34ee5398bbfc5b26f",
+  "overall_acceptance": "not accepted: four source-suite cells failed",
+  "windows_distribution": {
+    "status": "passed",
+    "checks": {
+      "build": "external",
+      "archives": "passed",
+      "venv": "passed",
+      "install": "passed",
+      "origin": "passed",
+      "resources": "passed",
+      "help": "passed",
+      "demo": "passed",
+      "server": "passed",
+      "unit_suite": "passed"
+    },
+    "suite": {
+      "status": "passed",
+      "discovered": 84,
+      "testsRun": 84,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "remote_attempts": [],
+      "unfinished": false,
+      "returncode": 0,
+      "package_origin": "D:\\a\\_temp\\palette-distribution-yckw05mh\\venv\\Lib\\site-packages\\palette_lab\\__init__.py",
+      "export_asset": "D:\\a\\_temp\\palette-distribution-yckw05mh\\venv\\Lib\\site-packages\\palette_lab\\web\\app.js"
+    },
+    "python": "3.12.10",
+    "node": "v22.23.3",
+    "artifact_id": 11164755530,
+    "artifact_sha256": "e0b9adc3d5de4c19d7e6592f7a36b37d2f130486a994c8a33ede2ef82dbd4dde"
+  }
+}

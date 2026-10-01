@@ -1,0 +1,11 @@
+{
+  "tests": 9,
+  "failures": [
+    "test_windows_stop_preserves_tree_failure_after_bounded_fallback (test_cli.ServerSupportTests.test_windows_stop_preserves_tree_failure_after_bounded_fallback) (outcome=TimeoutExpired('taskkill', 10))"
+  ],
+  "errors": [],
+  "skipped": [],
+  "cleanup": "not verified: all test-created directories and files retained",
+  "artifact_root": "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\a0dfc017070e45529600511cde486133",
+  "retained_unlinks": []
+}

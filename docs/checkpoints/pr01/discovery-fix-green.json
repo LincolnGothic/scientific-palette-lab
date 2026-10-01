@@ -1,0 +1,9 @@
+{
+  "tests": 21,
+  "failures": [],
+  "errors": [],
+  "skipped": [],
+  "cleanup": "not verified: all test-created directories and files retained",
+  "artifact_root": "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\233a1cf13b474d57a083760314931f97",
+  "retained_unlinks": []
+}

@@ -1,0 +1,14 @@
+{
+  "tests": 7,
+  "failures": [],
+  "errors": [
+    "test_failed_startups_are_bounded_diagnostic_and_reaped (test_cli.ServerSupportTests.test_failed_startups_are_bounded_diagnostic_and_reaped) (case='state-failure')",
+    "test_failed_startups_are_bounded_diagnostic_and_reaped (test_cli.ServerSupportTests.test_failed_startups_are_bounded_diagnostic_and_reaped) (case='malformed-health')",
+    "test_failed_startups_are_bounded_diagnostic_and_reaped (test_cli.ServerSupportTests.test_failed_startups_are_bounded_diagnostic_and_reaped) (case='malformed-state')",
+    "test_server_starts_and_serves_on_available_port (test_cli.StartupTests.test_server_starts_and_serves_on_available_port)"
+  ],
+  "skipped": [],
+  "cleanup": "not verified: all test-created directories and files retained",
+  "artifact_root": "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\aef91e8f31314ffa959f2a9a2819d388",
+  "retained_unlinks": []
+}

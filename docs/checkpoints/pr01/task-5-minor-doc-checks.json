@@ -1,0 +1,162 @@
+{
+  "status": "passed",
+  "checks": [
+    {
+      "check": "README.md local link docs/HOSTING.md",
+      "passed": true
+    },
+    {
+      "check": "README.md local link docs/DEVELOPMENT.md",
+      "passed": true
+    },
+    {
+      "check": "README.md local link VALIDATION.md",
+      "passed": true
+    },
+    {
+      "check": "README.md local link docs/HOSTING.md",
+      "passed": true
+    },
+    {
+      "check": "VALIDATION.md local link docs/DEVELOPMENT.md",
+      "passed": true
+    },
+    {
+      "check": "DEVELOPMENT.md local link ../README.md",
+      "passed": true
+    },
+    {
+      "check": "DEVELOPMENT.md local link ../pyproject.toml",
+      "passed": true
+    },
+    {
+      "check": "DEVELOPMENT.md local link ../ci/constraints.txt",
+      "passed": true
+    },
+    {
+      "check": "DEVELOPMENT.md local link ../ci/constraints-minimum.txt",
+      "passed": true
+    },
+    {
+      "check": "DEVELOPMENT.md local link ../render.yaml",
+      "passed": true
+    },
+    {
+      "check": "DEVELOPMENT.md local link HOSTING.md",
+      "passed": true
+    },
+    {
+      "check": "DEVELOPMENT.md local link ../VALIDATION.md",
+      "passed": true
+    },
+    {
+      "check": "run_tests.py documented options exist",
+      "passed": true
+    },
+    {
+      "check": "run_tests.py documented invocation",
+      "passed": true
+    },
+    {
+      "check": "verify_distribution.py documented options exist",
+      "passed": true
+    },
+    {
+      "check": "verify_distribution.py documented invocation",
+      "passed": true
+    },
+    {
+      "check": "check_hosting.py documented options exist",
+      "passed": true
+    },
+    {
+      "check": "check_hosting.py documented invocation",
+      "passed": true
+    },
+    {
+      "check": "exact scoped format command matches workflow",
+      "passed": true
+    },
+    {
+      "check": "lint command matches workflow",
+      "passed": true
+    },
+    {
+      "check": "wheel-from-sdist build matches workflow",
+      "passed": true
+    },
+    {
+      "check": "artifact family tests-",
+      "passed": true
+    },
+    {
+      "check": "artifact family quality",
+      "passed": true
+    },
+    {
+      "check": "artifact family distribution-",
+      "passed": true
+    },
+    {
+      "check": "artifact family docker",
+      "passed": true
+    },
+    {
+      "check": "run_tests.py evidence terms match actual implementation",
+      "passed": true
+    },
+    {
+      "check": "verify_distribution.py evidence terms match actual implementation",
+      "passed": true
+    },
+    {
+      "check": "check_hosting.py evidence terms match actual implementation",
+      "passed": true
+    },
+    {
+      "check": "historical release, browser and acquisition body preserved verbatim",
+      "passed": true
+    },
+    {
+      "check": "no fixed current suite total",
+      "passed": true
+    },
+    {
+      "check": "current evidence links stable workflow URL",
+      "passed": true
+    },
+    {
+      "check": "obsolete environment references absent",
+      "passed": true
+    },
+    {
+      "check": "POSIX base creation and interpreter aligned",
+      "passed": true
+    },
+    {
+      "check": "POSIX developer creation and interpreter aligned",
+      "passed": true
+    },
+    {
+      "check": "PowerShell base creation and interpreter aligned",
+      "passed": true
+    },
+    {
+      "check": "PowerShell developer creation and interpreter aligned",
+      "passed": true
+    },
+    {
+      "check": "existing Git environment ignore covers nested environments",
+      "passed": true
+    },
+    {
+      "check": "existing Docker environment ignore covers nested environments",
+      "passed": true
+    },
+    {
+      "check": "guide changes limited to requested environment substitutions",
+      "passed": true
+    }
+  ],
+  "limits": "Static documentation audit only; no tests, builds, Docker or cleanup executed."
+}

@@ -1,0 +1,8 @@
+{
+  "artifact_root": "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\task4-build-a17fa6e2e9f24017837032effa7beaee",
+  "dist": "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\task4-build-a17fa6e2e9f24017837032effa7beaee\\dist",
+  "returncode": 0,
+  "retention": "TemporaryDirectory/mkdtemp use owned Path.mkdir artifacts; all requested directory/file removals renamed into retained-removals, after resolved absolute path containment check; shipped behavior unchanged",
+  "stdout_tail": "l' and adding 'build\\bdist.win-amd64\\wheel' to it\nadding 'palette_lab/__init__.py'\nadding 'palette_lab/__main__.py'\nadding 'palette_lab/app.py'\nadding 'palette_lab/classify.py'\nadding 'palette_lab/colors.py'\nadding 'palette_lab/config.py'\nadding 'palette_lab/corpus.py'\nadding 'palette_lab/demo.py'\nadding 'palette_lab/figures.py'\nadding 'palette_lab/hosting.py'\nadding 'palette_lab/recommend.py'\nadding 'palette_lab/statistics.py'\nadding 'palette_lab/store.py'\nadding 'palette_lab/web/app.js'\nadding 'palette_lab/web/index.html'\nadding 'palette_lab/web/style.css'\nadding 'scientific_palette_lab-0.1.0.dist-info/METADATA'\nadding 'scientific_palette_lab-0.1.0.dist-info/WHEEL'\nadding 'scientific_palette_lab-0.1.0.dist-info/entry_points.txt'\nadding 'scientific_palette_lab-0.1.0.dist-info/top_level.txt'\nadding 'scientific_palette_lab-0.1.0.dist-info/RECORD'\nremoving build\\bdist.win-amd64\\wheel\nSuccessfully built scientific_palette_lab-0.1.0.tar.gz and scientific_palette_lab-0.1.0-py3-none-any.whl\n",
+  "stderr_tail": "warning: build_py: byte-compiling is disabled, skipping.\n\nwarning: install_lib: byte-compiling is disabled, skipping.\n\n"
+}

@@ -1,0 +1,47 @@
+{
+  "status": "passed",
+  "environment": {
+    "platform": "Windows-11-10.0.26300-SP0",
+    "architecture": "AMD64",
+    "python": "3.12.14",
+    "executable": "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\task4-runtime-ca0cf664b4874a45b4bdc6178f35eaea\\palette-distribution-05a2006ff8a24a6b8685b20612732079\\venv\\Scripts\\python.exe",
+    "versions": {
+      "numpy": "2.3.5",
+      "Pillow": "12.3.0",
+      "scientific-palette-lab": "0.1.0"
+    },
+    "tools": {
+      "pip_freeze": {
+        "returncode": 0,
+        "stdout": "numpy==2.3.5\npillow==12.3.0\nscientific-palette-lab @ file:///F:/codex/Project%20Plan/pr01-implementation/artifacts/task4-build-a17fa6e2e9f24017837032effa7beaee/dist/scientific_palette_lab-0.1.0-py3-none-any.whl#sha256=2ae1ed3f5c0aef96093454b6e40779d76b5f1cf249fe1353a2ef59700d9b43b9\n",
+        "stderr": ""
+      },
+      "node": {
+        "returncode": 0,
+        "stdout": "v24.19.0\n",
+        "stderr": ""
+      },
+      "ruff": {
+        "status": "unavailable",
+        "reason": "[WinError 2] The system cannot find the file specified"
+      }
+    },
+    "tested_commit_sha": null,
+    "commit_kind": "tested SHA (may be a PR merge-test commit)",
+    "runner": {
+      "RUNNER_OS": null,
+      "RUNNER_ARCH": null,
+      "ImageOS": null,
+      "ImageVersion": null
+    }
+  },
+  "remote_attempts": [],
+  "package_origin": "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\task4-runtime-ca0cf664b4874a45b4bdc6178f35eaea\\palette-distribution-05a2006ff8a24a6b8685b20612732079\\venv\\Lib\\site-packages\\palette_lab\\__init__.py",
+  "discovered": 84,
+  "export_asset": "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\task4-runtime-ca0cf664b4874a45b4bdc6178f35eaea\\palette-distribution-05a2006ff8a24a6b8685b20612732079\\venv\\Lib\\site-packages\\palette_lab\\web\\app.js",
+  "testsRun": 84,
+  "failures": 0,
+  "errors": 0,
+  "skips": 0,
+  "duration": 27.03099999999904
+}

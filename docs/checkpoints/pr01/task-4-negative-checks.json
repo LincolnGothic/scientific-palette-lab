@@ -1,0 +1,77 @@
+{
+  "artifact_root": "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\task4-negative-b32c19b5c8d2463d9358e2abfde4b3e0",
+  "checks": [
+    {
+      "case": "plan",
+      "status": "rejected",
+      "reason": "Render plan: expected '0.5c-512mb', found 'wrong'"
+    },
+    {
+      "case": "healthCheckPath",
+      "status": "rejected",
+      "reason": "Render healthCheckPath: expected '/health', found '/wrong'"
+    },
+    {
+      "case": "numInstances",
+      "status": "rejected",
+      "reason": "Render numInstances: expected 1, found 2"
+    },
+    {
+      "case": "branch",
+      "status": "rejected",
+      "reason": "Render branch: expected 'main', found 'other'"
+    },
+    {
+      "case": "tracked-password",
+      "status": "rejected",
+      "reason": "Render environment must match the four reviewed keys; password has sync:false and no literal value"
+    },
+    {
+      "case": "extra-env",
+      "status": "rejected",
+      "reason": "Render environment must match the four reviewed keys; password has sync:false and no literal value"
+    },
+    {
+      "case": "disk-mismatch",
+      "status": "rejected",
+      "reason": "Incorrect persistent disk: {'mountPath': '/wrong', 'name': 'research-corpus', 'sizeGB': 1}"
+    },
+    {
+      "case": "two-services",
+      "status": "rejected",
+      "reason": "Render must define exactly one service"
+    },
+    {
+      "case": "archive-good",
+      "status": "passed",
+      "resources": 16
+    },
+    {
+      "case": "missing-asset",
+      "status": "rejected",
+      "reason": "\"There is no item named 'palette_lab/web/app.js' in the archive\""
+    },
+    {
+      "case": "changed-module",
+      "status": "rejected",
+      "reason": "Wheel/source mismatch: palette_lab/store.py"
+    },
+    {
+      "case": "wrong-version",
+      "status": "rejected",
+      "reason": "Incorrect distribution name/version"
+    },
+    {
+      "case": "stale-extra-wheel",
+      "status": "rejected",
+      "reason": "Expected exactly one wheel and sdist; found ['scientific_palette_lab-0.1.0-py3-none-any.whl', 'scientific_palette_lab-0.1.0.tar.gz', 'stale.whl']"
+    },
+    {
+      "case": "workflow-matrix-anchor-actions-failure-upload",
+      "status": "passed",
+      "required_cells": 10
+    }
+  ],
+  "count": 14,
+  "cleanup": "All owned mutations retained"
+}

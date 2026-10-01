@@ -2,6 +2,12 @@
 
 A local Python application for collecting and reviewing figure palettes from the **flagship Nature, Science, and Cell journals**. Data charts and flowcharts have separate analysis pipelines, color semantics, rankings, and visual previews. The default study window is **2021–2025**.
 
+## Planning review
+
+The [30 September 2026 repository review and improvement plan](docs/reviews/2026-09-30/scientific-palette-lab-improvement-plan.md) proposes the architecture, database changes, validation strategy, and incremental roadmap through v1.0. It includes nine v0.2 PRs and preserves the current implementation as the baseline. See the accompanying [verification snapshot](docs/reviews/2026-09-30/baseline-verification.json) for the observed Windows test results and limitations.
+
+The roadmap is a proposal; feature implementation remains deferred.
+
 ## Run
 
 For a clickable hosted website with the full Python application, see [web hosting instructions](docs/HOSTING.md). A Render Docker Blueprint with persistent storage and password protection is included; deploying it requires a hosting account and approval of the provider's charges. GitHub Pages alone cannot run the Python backend.

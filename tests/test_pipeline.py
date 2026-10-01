@@ -1,5 +1,6 @@
 import io
 import json
+import os
 import tempfile
 import unittest
 import urllib.parse
@@ -126,8 +127,9 @@ class CorpusTests(unittest.TestCase):
 
 class StoreAndAnalysisTests(unittest.TestCase):
     def setUp(self):
-        self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name);self.store=Store(self.root)
-    def tearDown(self): self.temp.cleanup()
+        self.temp=tempfile.TemporaryDirectory(dir=os.environ.get('RUNNER_TEMP'))
+        self.addCleanup(self.temp.cleanup)
+        self.root=Path(self.temp.name);self.store=Store(self.root)
     def add_panel(self,paper_id,colors,kind='data',ptype='categorical',eligible='included',review=True,is_demo=False):
         self.store.put_paper({'id':paper_id,'journal':'Nature','year':2024,'title':'Fixture','is_demo':is_demo})
         index=len(self.store.panels("demo" if is_demo else "real"))
@@ -208,6 +210,11 @@ class StoreAndAnalysisTests(unittest.TestCase):
         request={'image':base64.b64encode(stream.getvalue()).decode(),'title':'Upload','journal':'Cell','year':2023,'doi':'10.1234/test'}
         first=app.post('/api/import',request);second=app.post('/api/import',request)
         self.assertTrue(first['new']);self.assertFalse(second['new']);self.assertEqual(self.store.overview()['papers'],1)
+        self.assertEqual(first['figure_id'],second['figure_id'])
+        panels=self.store.panels()
+        self.assertEqual(len(panels),1)
+        assets=list((self.root/'assets').glob('*.png'))
+        self.assertEqual(assets,[self.root/panels[0]['asset_path']])
     def test_local_and_repository_imports_share_a_paper_vote(self):
         first=self.store.put_paper({'id':'PMC123','journal':'Cell','year':2023,'title':'Published','doi':'10.1234/test','pmcid':'PMC123','license':'CC BY','metadata':{'s3':{'xml_url':'s3://pmc-oa-opendata/a.xml','license_code':'CC BY'}}})
         second=self.store.put_paper({'id':'LOCAL-other','journal':'Cell','year':2023,'title':'Published','doi':'10.1234/TEST'})

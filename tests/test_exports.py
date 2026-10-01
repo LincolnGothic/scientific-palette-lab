@@ -1,15 +1,115 @@
 """Exercise actual browser downloadCode with Node's built-in VM; Node is required."""
 import ast
+import csv
+import http.client
+import io
 import json
+import os
 import shutil
 import subprocess
 import tempfile
+import threading
 import unittest
+import urllib.parse
+from http.server import ThreadingHTTPServer
 from pathlib import Path
 
+from PIL import Image
+
+from palette_lab.app import Application, handler_for
+from palette_lab.store import Store
+from support import stop_http_server
 
 HERE = Path(__file__).resolve().parent
 APP_JS = HERE.parent / "palette_lab" / "web" / "app.js"
+
+
+class HTTPExportTests(unittest.TestCase):
+    def setUp(self):
+        directory = tempfile.TemporaryDirectory(dir=os.environ.get("RUNNER_TEMP"))
+        self.addCleanup(directory.cleanup)
+        self.store = Store(Path(directory.name))
+        self.fixtures = {}
+        for ptype in ("categorical", "sequential", "diverging", "roles"):
+            self.fixtures[ptype] = self.add_reviewed(ptype)
+        self.add_reviewed("categorical", dataset="demo")
+        self.add_reviewed("categorical", eligibility="excluded")
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), handler_for(Application(self.store)))
+        self.addCleanup(self.server.server_close)
+        thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.addCleanup(stop_http_server, self.server, thread)
+        thread.start()
+
+    def add_reviewed(self, ptype, dataset="real", eligibility="included"):
+        paper_id = f"fixture-{ptype}-{dataset}-{eligibility}"
+        url = f"https://example.test/papers/{paper_id}"
+        self.store.put_paper({"id": paper_id, "journal": "Nature", "year": 2024,
+                              "title": paper_id, "source_url": url, "license": "CC BY",
+                              "pmcid": "PMC123", "is_demo": dataset == "demo",
+                              "metadata": {"s3": {"is_manuscript": False}}})
+        asset = self.store.root / "assets" / f"{paper_id}.png"
+        with Image.new("RGB", (3, 1)) as image:
+            image.putdata([(255, 0, 0), (255, 255, 255), (0, 0, 255)])
+            image.save(asset)
+        self.store.put_figure(paper_id, "figure-1", "Figure 1", "Offline export fixture", asset, "", 1, 1)
+        panel = next(p for p in self.store.panels(dataset) if p["paper_id"] == paper_id)
+        roles = ("fill", "text", "connector") if ptype == "roles" else ("unassigned",) * 3
+        colors = [{"hex": color, "role": role, "weight": 0}
+                  for color, role in zip(("#FF0000", "#FFFFFF", "#0000FF"), roles)]
+        kind = "flowchart" if ptype == "roles" else "data"
+        self.store.review(panel["id"], {"kind": kind, "palette_type": ptype, "colors": colors,
+                                      "revision": 0, "eligibility": eligibility,
+                                      "confirmed_experimental": eligibility == "included"})
+        return {"paper_id": paper_id, "url": url, "panel_id": panel["id"], "colors": colors, "kind": kind}
+
+    def request(self, extension, filters):
+        connection = http.client.HTTPConnection("127.0.0.1", self.server.server_port, timeout=5)
+        try:
+            connection.request("GET", f"/api/export.{extension}?" + urllib.parse.urlencode(filters))
+            response = connection.getresponse()
+            self.assertEqual(response.status, 200)
+            self.assertEqual(response.getheader("Cache-Control"), "no-store")
+            filename = "palette-analysis.json" if extension == "json" else "palette-rankings.csv"
+            self.assertEqual(response.getheader("Content-Disposition"), f'attachment; filename="{filename}"')
+            self.assertEqual(response.getheader("Content-Type"),
+                             "application/json; charset=utf-8" if extension == "json" else "text/csv; charset=utf-8")
+            return response.read().decode("utf-8")
+        finally:
+            connection.close()
+
+    def test_http_json_and_csv_preserve_reviewed_scope_sources_roles_and_order(self):
+        columns = ["family_id", "kind", "palette_type", "color_count", "colors", "roles", "papers", "panels",
+                   "paper_denominator", "paper_prevalence", "dataset", "threshold_delta_e76",
+                   "source_paper_ids", "source_urls", "source_versions", "scope_filters"]
+        for ptype, fixture in self.fixtures.items():
+            with self.subTest(palette_type=ptype):
+                filters = {"dataset": "real", "kind": fixture["kind"], "palette_type": ptype,
+                           "journal": "Nature", "year": "2024", "count": "3", "threshold": "0"}
+                result = json.loads(self.request("json", filters))
+                self.assertEqual(result["filters"], filters)
+                self.assertEqual(result["threshold"], 0)
+                self.assertEqual(result["analyzed_papers"], 1)
+                self.assertEqual(result["analyzed_panels"], 1)
+                self.assertEqual(len(result["families"]), 1)
+                family = result["families"][0]
+                self.assertEqual(family["colors"], fixture["colors"])
+                self.assertEqual(family["kind"], fixture["kind"])
+                self.assertEqual(family["palette_type"], ptype)
+                self.assertEqual(family["count"], 3)
+                self.assertEqual(family["sources"], [{"panel_id": fixture["panel_id"], "paper_id": fixture["paper_id"],
+                    "label": "Figure 1", "journal": "Nature", "year": 2024, "title": fixture["paper_id"],
+                    "url": fixture["url"], "license": "CC BY", "version_type": "published"}])
+                reader = csv.DictReader(io.StringIO(self.request("csv", filters), newline=""))
+                self.assertEqual(reader.fieldnames, columns)
+                rows = list(reader)
+                self.assertEqual(len(rows), 1)
+                self.assertEqual(rows[0], {
+                    "family_id": family["id"], "kind": fixture["kind"], "palette_type": ptype, "color_count": "3",
+                    "colors": "#FF0000;#FFFFFF;#0000FF",
+                    "roles": ";".join(c["role"] for c in fixture["colors"]), "papers": "1", "panels": "1",
+                    "paper_denominator": "1", "paper_prevalence": "1.0", "dataset": "real", "threshold_delta_e76": "0.0",
+                    "source_paper_ids": json.dumps([fixture["paper_id"]]), "source_urls": json.dumps([fixture["url"]]),
+                    "source_versions": '["published"]', "scope_filters": json.dumps(filters, sort_keys=True)})
 
 
 class ExportTests(unittest.TestCase):

@@ -11,6 +11,28 @@ from .hosting import WebAccess
 from .store import Store
 
 
+def _startup_diagnostic(exc, host, port):
+    winerror = getattr(exc, "winerror", None)
+    original = f"{exc} (errno={exc.errno}, winerror={winerror})"
+    if exc.errno == errno.EADDRINUSE or winerror == 10048:
+        alternate_port = port + 1 if port < 65535 else 8765
+        return (f"Port {port} is already in use.\n"
+                f"If Scientific Palette Lab is already running, open http://127.0.0.1:{port}.\n"
+                "Otherwise stop the process using this port or choose another port:\n"
+                f"  bash run.sh serve --port {alternate_port}\n"
+                f"  python -m palette_lab serve --port {alternate_port}\n"
+                f"Original OS error: {original}\n")
+    if exc.errno in (errno.EACCES, errno.EPERM) or winerror == 10013:
+        return (f"Cannot start the web application at {host}:{port}: access denied ({original}).\n"
+                "An exclusive listener, reserved port, or system policy may deny binding. "
+                "This error does not identify the cause by itself. "
+                "Choose another permitted port or inspect the endpoint's reservation/permissions.\n")
+    if exc.errno == errno.EADDRNOTAVAIL or winerror == 10049:
+        return (f"Cannot start the web application at {host}:{port}: address unavailable ({original}).\n"
+                "Choose an address present on this machine.\n")
+    return None
+
+
 def main():
     parser = argparse.ArgumentParser(description="Reviewed palette analysis for Nature, Science, and Cell")
     parser.add_argument("--data-dir", default=os.environ.get("PALETTE_DATA_DIR"))
@@ -40,13 +62,10 @@ def main():
         except ValueError as exc:
             parser.exit(1, f"Cannot start the web application: {exc}\n")
         except OSError as exc:
-            if exc.errno != errno.EADDRINUSE:
+            message = _startup_diagnostic(exc, args.host, args.port)
+            if message is None:
                 raise
-            alternate_port = args.port + 1 if args.port < 65535 else 8765
-            parser.exit(1, f"Port {args.port} is already in use.\n"
-                          f"If Scientific Palette Lab is already running, open http://127.0.0.1:{args.port}.\n"
-                          "Otherwise stop the process using this port or choose another port:\n"
-                          f"  bash run.sh serve --port {alternate_port}\n")
+            parser.exit(1, message)
     elif args.command == "demo":
         seed_demo(store)
         print("Synthetic examples generated; the real corpus is unchanged.")

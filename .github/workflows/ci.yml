@@ -1,0 +1,142 @@
+name: Engineering CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: engineering-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+defaults:
+  run:
+    shell: bash
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTHONUTF8: "1"
+  PYTHONUNBUFFERED: "1"
+  CI_COMMIT_SHA: ${{ github.sha }}
+jobs:
+  tests:
+    name: tests-${{ matrix.os }}-py${{ matrix.python }}-${{ matrix.profile }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-24.04, python: "3.10", profile: baseline, constraints: ci/constraints.txt}
+          - {os: ubuntu-24.04, python: "3.11", profile: baseline, constraints: ci/constraints.txt}
+          - {os: ubuntu-24.04, python: "3.12", profile: baseline, constraints: ci/constraints.txt}
+          - {os: ubuntu-24.04, python: "3.13", profile: baseline, constraints: ci/constraints.txt}
+          - {os: windows-2022, python: "3.12", profile: baseline, constraints: ci/constraints.txt}
+          - {os: ubuntu-24.04, python: "3.10", profile: minimum, constraints: ci/constraints-minimum.txt}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # reviewed v5
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # reviewed v6
+        with: {python-version: "${{ matrix.python }}"}
+      - &isolated-python
+        name: Create isolated Python environment
+        run: |
+          python -m venv "$RUNNER_TEMP/palette-ci"
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          directory = Path(os.environ["RUNNER_TEMP"]) / "palette-ci"
+          scripts = directory / ("Scripts" if os.name == "nt" else "bin")
+          with open(os.environ["GITHUB_PATH"], "a", encoding="utf-8") as target:
+              target.write(str(scripts) + "\n")
+          PY
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # reviewed v5
+        with:
+          node-version: "22"
+          package-manager-cache: false
+      - name: Install base only
+        run: |
+          python -m pip install -c "${{ matrix.constraints }}" --only-binary=numpy,Pillow setuptools wheel numpy Pillow
+          python -m pip check
+          python -m pip install -c "${{ matrix.constraints }}" --no-build-isolation .
+          python -m pip check
+      - name: Full offline suite
+        run: python scripts/run_tests.py --timeout 180 --report ci-results/tests.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # reviewed v4
+        if: always()
+        with:
+          name: tests-${{ matrix.os }}-${{ matrix.python }}-${{ matrix.profile }}
+          path: ci-results/
+          if-no-files-found: warn
+  quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with: {python-version: "3.12"}
+      - *isolated-python
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with: {node-version: "22", package-manager-cache: false}
+      - name: Install developer tools
+        run: |
+          python -m pip install -c ci/constraints.txt setuptools wheel
+          python -m pip check
+          python -m pip install -c ci/constraints.txt --no-build-isolation ".[dev]"
+          python -m pip check
+      - run: ruff check palette_lab tests scripts
+      - run: ruff format --check scripts tests/support.py tests/test_cli.py tests/test_baseline.py tests/test_exports.py tests/test_package.py palette_lab/__main__.py
+      - run: node --check palette_lab/web/app.js
+      - run: python -m unittest discover -s tests -p test_exports.py -v
+      - run: bash -n run.sh
+      - run: python scripts/check_hosting.py --report ci-results/hosting-static.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with: {name: quality, path: ci-results/, if-no-files-found: warn}
+  distribution:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix: {os: [ubuntu-24.04, windows-2022]}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with: {python-version: "3.12"}
+      - *isolated-python
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with: {node-version: "22", package-manager-cache: false}
+      - name: Build both distributions
+        run: |
+          python -m pip install -c ci/constraints.txt setuptools wheel build
+          python -m pip check
+          python -m build --no-isolation
+      - run: python scripts/verify_distribution.py --dist dist --report ci-results/distribution.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: distribution-${{ matrix.os }}
+          path: |
+            dist/
+            ci-results/
+          if-no-files-found: warn
+  docker:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with: {python-version: "3.12"}
+      - *isolated-python
+      - run: |
+          python -m pip install -c ci/constraints.txt PyYAML
+          python -m pip check
+      - run: |
+          mkdir -p ci-results
+          docker build --pull --progress=plain --tag palette-lab-ci . 2>&1 | tee ci-results/docker-build.log
+      - run: python scripts/check_hosting.py --docker palette-lab-ci --report ci-results/docker.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with: {name: docker, path: ci-results/, if-no-files-found: warn}

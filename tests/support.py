@@ -26,8 +26,28 @@ def server_environment():
 
 
 def stop_process(process):
+    cleanup_error = None
     if process.poll() is None:
-        process.terminate()
+        if os.name == "nt":
+            # Venv launchers inherit logs into a child interpreter; stop that
+            # exact owned tree before reaping the launcher.
+            try:
+                result = subprocess.run(
+                    ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
+                if result.returncode:
+                    cleanup_error = (
+                        f"returncode={result.returncode}: {result.stdout} {result.stderr}"
+                    )
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                cleanup_error = repr(exc)
+            if cleanup_error is not None and process.poll() is None:
+                process.kill()
+        else:
+            process.terminate()
     try:
         process.wait(timeout=5)
     except subprocess.TimeoutExpired:
@@ -36,6 +56,8 @@ def stop_process(process):
             process.wait(timeout=5)
         except subprocess.TimeoutExpired as exc:
             raise AssertionError(f"Failed to reap server process pid={process.pid}") from exc
+    if cleanup_error is not None:
+        raise AssertionError(f"Failed to stop server tree pid={process.pid}: {cleanup_error}")
 
 
 def _tail(path):

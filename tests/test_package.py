@@ -14,6 +14,7 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+from unittest.mock import Mock
 from types import ModuleType, SimpleNamespace
 
 import palette_lab
@@ -32,6 +33,159 @@ hosting_module = importlib.util.module_from_spec(hosting_spec)
 # Docker ownership tests exercise no YAML parsing; base tests need no dev extras.
 with patch.dict(sys.modules, {"yaml": ModuleType("yaml"), "run_tests": watchdog_module}):
     hosting_spec.loader.exec_module(hosting_module)
+
+
+class InstalledDeadlineTests(unittest.TestCase):
+    def test_installed_call_allows_watchdog_to_finish_owned_cleanup(self):
+        # Other distribution phases are mocked; exercise the actual installed call
+        # and watchdog with a virtual clock/owned child, without dev dependencies.
+        requirements = ModuleType("packaging.requirements")
+        requirements.Requirement = Mock()
+        spec = importlib.util.spec_from_file_location(
+            "palette_test_distribution", PROJECT / "scripts/verify_distribution.py"
+        )
+        distribution = importlib.util.module_from_spec(spec)
+        with patch.dict(
+            sys.modules,
+            {
+                "packaging": ModuleType("packaging"),
+                "packaging.requirements": requirements,
+                "run_tests": watchdog_module,
+            },
+        ):
+            spec.loader.exec_module(distribution)
+        directory = tempfile.TemporaryDirectory(dir=os.environ.get("RUNNER_TEMP"))
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        runtime = root / "runtime"
+        runtime.mkdir()
+        package = runtime / "venv/Lib/site-packages/palette_lab/__init__.py"
+        clock, events = [0.0], []
+        owned = {"worker_alive": True, "descendant_alive": True, "cleaned": False}
+        process = Mock(pid=424242, returncode=None)
+        outer_deadline = [None]
+
+        class OuterDeadlineExpired(BaseException):
+            pass
+
+        def metadata():
+            clock[0] += 30
+            events.append(["metadata_finished", clock[0]])
+            return {}
+
+        def wait(timeout):
+            if outer_deadline[0] is not None and clock[0] + timeout >= outer_deadline[0]:
+                clock[0] = outer_deadline[0]
+                events.append(["outer_killed_watchdog", clock[0]])
+                raise OuterDeadlineExpired()
+            clock[0] += timeout
+            events.append(["worker_timeout", clock[0]])
+            raise subprocess.TimeoutExpired("owned-worker", timeout)
+
+        def cleanup(child):
+            self.assertIs(child, process)
+            clock[0] += 15
+            owned.update(worker_alive=False, descendant_alive=False, cleaned=True)
+            process.returncode = -9
+            events.append(["owned_tree_cleanup_finished", clock[0]])
+            return {"owned_pid": child.pid}
+
+        process.wait.side_effect = wait
+
+        def run(arguments, **kwargs):
+            if len(arguments) > 2 and Path(arguments[2]).name == "run_tests.py":
+                budget = kwargs.get("timeout")
+                outer_deadline[0] = budget
+                suite_report = Path(arguments[arguments.index("--report") + 1])
+                worker_report = root / "partial-worker.json"
+                worker_report.write_text(
+                    json.dumps({"status": "running", "testsRun": 2}), encoding="utf-8"
+                )
+                try:
+                    with (
+                        patch.object(watchdog_module, "environment_metadata", side_effect=metadata),
+                        patch.object(
+                            watchdog_module.time, "monotonic", side_effect=lambda: clock[0]
+                        ),
+                        patch.object(watchdog_module.subprocess, "Popen", return_value=process),
+                        patch.object(watchdog_module, "stop_worker", side_effect=cleanup),
+                        redirect_stdout(io.StringIO()),
+                        redirect_stderr(io.StringIO()),
+                    ):
+                        code = watchdog_module.watchdog(
+                            ["owned-worker"],
+                            float(arguments[arguments.index("--timeout") + 1]),
+                            suite_report,
+                            worker_report,
+                            root,
+                            {},
+                        )
+                except OuterDeadlineExpired:
+                    raise subprocess.TimeoutExpired(arguments, budget) from None
+                return subprocess.CompletedProcess(arguments, code, "partial watchdog report", "")
+            stdout = ""
+            if "-c" in arguments:
+                code = arguments[arguments.index("-c") + 1]
+                if "'package':" in code:
+                    stdout = json.dumps({"package": str(package), "prefix": str(runtime / "venv")})
+                elif "read_bytes().hex()" in code:
+                    stdout = json.dumps(
+                        {
+                            name: (PROJECT / "palette_lab/web" / name).read_bytes().hex()
+                            for name in distribution.ASSETS
+                        }
+                    )
+            return subprocess.CompletedProcess(arguments, 0, stdout, "")
+
+        opener = Mock()
+        opener.open.side_effect = [
+            io.StringIO(json.dumps({"overview": {"papers": 0}, "panels": []})),
+            *(
+                io.BytesIO((PROJECT / "palette_lab/web" / name).read_bytes())
+                for name in distribution.ASSETS
+            ),
+        ]
+        server = Mock()
+        server.return_value.__enter__ = Mock(
+            return_value=("http://127.0.0.1:1234", lambda: "fixture")
+        )
+        server.return_value.__exit__ = Mock(return_value=False)
+        report_path = root / "distribution.json"
+        with (
+            patch.object(distribution, "environment_metadata", return_value={}),
+            patch.object(
+                distribution,
+                "inspect_archives",
+                return_value=(root / "fixture.whl", {"status": "passed"}, []),
+            ),
+            patch.object(distribution.tempfile, "mkdtemp", return_value=str(runtime)),
+            patch.object(distribution.venv.EnvBuilder, "create"),
+            patch.object(distribution.subprocess, "run", side_effect=run),
+            patch("support.running_server", server),
+            patch.object(distribution.urllib.request, "build_opener", return_value=opener),
+        ):
+            result = distribution.verify(root, report_path)
+        evidence = {"outer_deadline": outer_deadline[0], "events": events, **owned}
+        (root / "deadline-evidence.json").write_text(
+            json.dumps(evidence, indent=2), encoding="utf-8"
+        )
+        self.assertEqual(result, 1)  # The controlled worker timeout must propagate.
+        self.assertTrue(owned["cleaned"], evidence)
+        self.assertFalse(owned["worker_alive"], evidence)
+        self.assertFalse(owned["descendant_alive"], evidence)
+        self.assertEqual(
+            events,
+            [
+                ["metadata_finished", 30.0],
+                ["worker_timeout", 210.0],
+                ["owned_tree_cleanup_finished", 225.0],
+            ],
+        )
+        suite_report = report_path.with_name("distribution.installed-tests.json")
+        partial = json.loads(suite_report.read_text(encoding="utf-8"))
+        self.assertEqual(partial["status"], "timeout")
+        self.assertEqual(partial["testsRun"], 2)
+        self.assertTrue(partial["unfinished"])
 
 
 class PackageTests(unittest.TestCase):
@@ -149,6 +303,18 @@ class PackageTests(unittest.TestCase):
 
 
 class WatchdogTests(unittest.TestCase):
+    def test_discovery_is_independent_of_the_default_loader_root(self):
+        with patch.object(unittest.defaultTestLoader, "_top_level_dir", str(PROJECT / "tests")):
+            code, report = self.worker_case(
+                "import unittest\nclass FreshRoot(unittest.TestCase):\n def test_pass(self): pass\n",
+                "test_fresh_root_fixture.py",
+            )
+            self.assertEqual(unittest.defaultTestLoader._top_level_dir, str(PROJECT / "tests"))
+        self.assertEqual(code, 0, report)
+        self.assertEqual(report["discovered"], 1)
+        self.assertEqual(report["testsRun"], 1)
+        self.assertEqual(report["status"], "passed")
+
     def test_worker_asset_substitution_reaches_actual_harness_command(self):
         import test_exports
 

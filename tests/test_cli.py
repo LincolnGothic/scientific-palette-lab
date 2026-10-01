@@ -149,8 +149,9 @@ class ServerSupportTests(unittest.TestCase):
 
                 def launch(*args, **kwargs):
                     process = actual_popen(*args, **kwargs)
-                    children.append(process)
-                    handles.extend((kwargs["stdout"], kwargs["stderr"]))
+                    if hasattr(kwargs.get("stdout"), "closed"):
+                        children.append(process)
+                        handles.extend((kwargs["stdout"], kwargs["stderr"]))
                     return process
 
                 with patch("support.subprocess.Popen", side_effect=launch):
@@ -171,6 +172,11 @@ class ServerSupportTests(unittest.TestCase):
                 self.assertIn("stderr", str(caught.exception))
                 self.assertIsNotNone(children[0].poll())
                 self.assertTrue(all(handle.closed for handle in handles))
+                for filename in ("server.stdout.log", "server.stderr.log"):
+                    log = Path(directory.name) / filename
+                    renamed = log.with_suffix(log.suffix + ".owned-rename")
+                    log.rename(renamed)
+                    renamed.rename(log)
                 if name == "early-exit":
                     self.assertIn("child failure", str(caught.exception))
 
@@ -204,13 +210,61 @@ class ServerSupportTests(unittest.TestCase):
         process = Mock()
         process.poll.return_value = None
         process.wait.side_effect = [subprocess.TimeoutExpired("fixture", 5), 0]
-        stop_process(process)
+        with patch("support.os.name", "posix"):
+            stop_process(process)
         process.terminate.assert_called_once_with()
         process.kill.assert_called_once_with()
         self.assertEqual(process.wait.call_args_list, [unittest.mock.call(timeout=5)] * 2)
         process.wait.side_effect = subprocess.TimeoutExpired("fixture", 5)
-        with self.assertRaisesRegex(AssertionError, "reap"):
+        with patch("support.os.name", "posix"), self.assertRaisesRegex(AssertionError, "reap"):
             stop_process(process)
+
+    def test_windows_stop_owns_exact_tree_and_bounds_reaping(self):
+        from support import stop_process
+
+        process = Mock(pid=424242)
+        process.poll.return_value = None
+        with (
+            patch("support.os.name", "nt"),
+            patch(
+                "support.subprocess.run", return_value=subprocess.CompletedProcess([], 0, "", "")
+            ) as run,
+        ):
+            stop_process(process)
+        run.assert_called_once_with(
+            ["taskkill", "/PID", "424242", "/T", "/F"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        process.wait.assert_called_once_with(timeout=5)
+        process.terminate.assert_not_called()
+        process.kill.assert_not_called()
+
+    def test_windows_stop_preserves_tree_failure_after_bounded_fallback(self):
+        from support import stop_process
+
+        for outcome in (
+            subprocess.CompletedProcess([], 1, "owned fixture", "access denied"),
+            subprocess.TimeoutExpired("taskkill", 10),
+            OSError("taskkill unavailable"),
+        ):
+            with self.subTest(outcome=outcome):
+                process = Mock(pid=424242)
+                process.poll.return_value = None
+                with patch("support.os.name", "nt"), patch("support.subprocess.run") as run:
+                    if isinstance(outcome, Exception):
+                        run.side_effect = outcome
+                    else:
+                        run.return_value = outcome
+                    with self.assertRaisesRegex(AssertionError, "server tree pid=424242") as caught:
+                        stop_process(process)
+                self.assertIn(
+                    repr(outcome) if isinstance(outcome, Exception) else "access denied",
+                    str(caught.exception),
+                )
+                process.kill.assert_called_once_with()
+                process.wait.assert_called_once_with(timeout=5)
 
 
 class StartupTests(unittest.TestCase):
@@ -273,8 +327,9 @@ class StartupTests(unittest.TestCase):
 
         def launch(*args, **kwargs):
             process = actual_popen(*args, **kwargs)
-            children.append(process)
-            handles.extend((kwargs["stdout"], kwargs["stderr"]))
+            if hasattr(kwargs.get("stdout"), "closed"):
+                children.append(process)
+                handles.extend((kwargs["stdout"], kwargs["stderr"]))
             return process
 
         with tempfile.TemporaryDirectory(dir=os.environ.get("RUNNER_TEMP")) as directory:
@@ -288,3 +343,8 @@ class StartupTests(unittest.TestCase):
                         self.assertIn(b"Scientific Palette Lab", response.read())
             self.assertIsNotNone(children[0].poll())
             self.assertTrue(all(handle.closed for handle in handles))
+            for filename in ("server.stdout.log", "server.stderr.log"):
+                log = Path(directory) / filename
+                renamed = log.with_suffix(log.suffix + ".owned-rename")
+                log.rename(renamed)
+                renamed.rename(log)

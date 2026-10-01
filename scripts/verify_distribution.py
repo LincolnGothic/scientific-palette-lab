@@ -306,7 +306,8 @@ def verify(dist, report_path):
                 "--report",
                 suite_report,
             ],
-            timeout=200,
+            # The bounded watchdog owns worker cleanup; an outer deadline could kill it first.
+            timeout=None,
         )
         checks[stage].update(
             status="passed",

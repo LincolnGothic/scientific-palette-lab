@@ -118,7 +118,7 @@ def run_worker(report_path, tests_directory=None):
 
         # Discovery adds tests/, never the source package root in installed mode.
         with patch.object(Remote, "get", prohibit_remote):
-            suite = unittest.defaultTestLoader.discover(str(tests_directory or PROJECT / "tests"))
+            suite = unittest.TestLoader().discover(str(tests_directory or PROJECT / "tests"))
             report["discovered"] = suite.countTestCases()
             write_report(report_path, report)
             if "test_exports" in sys.modules:

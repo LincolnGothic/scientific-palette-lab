@@ -16,6 +16,7 @@ from support import running_server, server_environment
 
 
 PROJECT = Path(__file__).resolve().parents[1]
+CWD = Path(os.environ.get("PALETTE_TEST_CWD", PROJECT))
 
 
 class DiagnosticTests(unittest.TestCase):
@@ -123,6 +124,22 @@ class ServerSupportTests(unittest.TestCase):
                 "last HTTP error=URLError",
             ),
             ("state-failure", state_failure, "last HTTP error=<HTTPError 503"),
+            (
+                "malformed-health",
+                state_failure.replace(
+                    "self.send_response(200 if self.path == '/health' else 503); self.end_headers(); self.wfile.write(b'{\"status\":\"ok\"}')",
+                    "self.connection.sendall(b'not HTTP\\r\\n\\r\\n')",
+                ),
+                "last HTTP error=BadStatusLine",
+            ),
+            (
+                "malformed-state",
+                state_failure.replace(
+                    "self.send_response(200 if self.path == '/health' else 503); self.end_headers(); self.wfile.write(b'{\"status\":\"ok\"}')",
+                    "self.connection.sendall(b'not HTTP\\r\\n\\r\\n') if self.path != '/health' else (self.send_response(200), self.end_headers(), self.wfile.write(b'{\"status\":\"ok\"}'))",
+                ),
+                "last HTTP error=BadStatusLine",
+            ),
         ):
             with self.subTest(case=name):
                 directory = tempfile.TemporaryDirectory(dir=os.environ.get("RUNNER_TEMP"))
@@ -227,7 +244,7 @@ class StartupTests(unittest.TestCase):
             port = listener.getsockname()[1]
             result = subprocess.run(
                 self.command(directory, port),
-                cwd=PROJECT,
+                cwd=CWD,
                 env=server_environment(),
                 capture_output=True,
                 text=True,
@@ -263,7 +280,7 @@ class StartupTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=os.environ.get("RUNNER_TEMP")) as directory:
             with patch("support.subprocess.Popen", side_effect=launch):
                 with running_server(
-                    self.command(directory, 0), PROJECT, directory, server_environment()
+                    self.command(directory, 0), CWD, directory, server_environment()
                 ) as (url, diagnostics):
                     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
                     with opener.open(url, timeout=5) as response:

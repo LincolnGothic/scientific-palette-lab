@@ -1,6 +1,7 @@
 """Portable, bounded server ownership for subprocess and HTTP tests."""
 
 from contextlib import contextmanager
+from http.client import HTTPException
 import json
 import os
 from pathlib import Path
@@ -95,7 +96,7 @@ def running_server(command, cwd, directory, env, startup_timeout=30):
                         if response.status == 200 and json.load(response) == {"status": "ok"}:
                             break
                         last_error = "Unexpected health response"
-                except (OSError, ValueError) as exc:
+                except (OSError, ValueError, HTTPException) as exc:
                     last_error = repr(exc)
                     if isinstance(exc, HTTPError):
                         exc.close()
@@ -104,7 +105,7 @@ def running_server(command, cwd, directory, env, startup_timeout=30):
                 with opener.open(url + "/api/state", timeout=2) as response:
                     if response.status != 200 or not isinstance(json.load(response), dict):
                         raise AssertionError(describe())
-            except (OSError, ValueError) as exc:
+            except (OSError, ValueError, HTTPException) as exc:
                 last_error = repr(exc)
                 if isinstance(exc, HTTPError):
                     exc.close()

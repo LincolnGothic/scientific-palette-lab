@@ -1,0 +1,31 @@
+{
+  "rationale": {
+    "lab": "D65/sRGB reference white and red use existing 0.01/0.03 Lab tolerances; black is zero. Red/blue Euclidean Lab distance is 176.314039, with 1e-6 tolerance for floating arithmetic.",
+    "raster": "Authored opaque equal-area interiors define the HEX truth. White is background; black/gray require include_neutrals. Alpha 128 red over white gives (255,127,127); 400 red and 200 blue retained pixels imply 2/3 and 1/3 weights.",
+    "families": "Eight fixed panels over five papers: a has three C0 blues and one red, b has D0, c has E0, d has red, e has two colors. Distinct C0/D0/E0 variants select D0 as medoid despite duplicate C0 panels. One-color denominators are four papers/seven panels; the two-color denominator is one/one. Journal/year counts count panels. Paper a contributes to both blue and red, so one-color prevalences sum to 1.25.",
+    "bootstrap": "Compatibility projection for sorted paper IDs, default_rng seed 2021, 100 paper-level draws, 2.5/97.5 percentiles: all-used two-color papers give [1,1]; blue 3/4 gives [0.25,1]; red 2/4 gives [0,1].",
+    "recommendations": "Two observed three-color families each occur in one of two papers. First white score = round(0.55*0.5 + 0.30*(16.97/30) + 0.15*(2.25/4.5),4) = 0.5197. Its identical reference has zero popularity and -0.05 penalty, giving 0.1947. Dark scores reflect current background contrast. Categorical collisions warn/filter; low contrast warns without exclusion. Simulated HEX arrays pin the current approximate full-dichromacy compatibility output, not accessibility certification.",
+    "references": "Pin the authored current Okabe-Ito and Paul Tol bright arrays and current illustrative flowchart role assignments; these references have no observed corpus prevalence."
+  },
+  "red_blue_delta_e": 176.314039,
+  "preview_bands": ["#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#FF00FF", "#00FFFF", "#800000", "#008000", "#000080", "#808000", "#800080", "#008080", "#FF8000"],
+  "families": [
+    {"rank":1,"count":2,"hex":["#0072B2","#E69F00"],"paper_count":1,"panel_count":1,"paper_denominator":1,"panel_denominator":1,"prevalence":1.0,"exact_variants":1,"by_journal":{"Nature":1},"by_year":{"2024":1},"bootstrap_interval":[1.0,1.0],"members":["e-two"]},
+    {"rank":2,"count":1,"hex":["#0000D0"],"paper_count":3,"panel_count":5,"paper_denominator":4,"panel_denominator":7,"prevalence":0.75,"exact_variants":3,"by_journal":{"Nature":3,"Cell":1,"Science":1},"by_year":{"2024":3,"2023":1,"2025":1},"bootstrap_interval":[0.25,1.0],"members":["a-blue-1","a-blue-2","a-blue-3","b-blue","c-blue"]},
+    {"rank":3,"count":1,"hex":["#FF0000"],"paper_count":2,"panel_count":2,"paper_denominator":4,"panel_denominator":7,"prevalence":0.5,"exact_variants":1,"by_journal":{"Nature":1,"Science":1},"by_year":{"2024":1,"2025":1},"bootstrap_interval":[0.0,1.0],"members":["a-red","d-red"]}
+  ],
+  "recommendation_hex": [["#0072B2","#E69F00","#009E73"],["#FF0000","#FF0101","#0000FF"],["#0072B2","#E69F00","#009E73"],["#4477AA","#EE6677","#228833"]],
+  "white_scores": [0.5197,0.4083,0.1947,0.1841],
+  "black_scores": [0.5797,0.3566,0.2547,0.2298],
+  "origins": ["observed","observed","reference","reference"],
+  "reference_arrays": {
+    "okabe_ito": ["#0072B2","#E69F00","#009E73","#CC79A7","#56B4E9","#D55E00","#F0E442","#000000"],
+    "tol_bright": ["#4477AA","#EE6677","#228833","#CCBB44","#66CCEE","#AA3377","#BBBBBB"]
+  },
+  "role_reference": [{"hex":"#D8E9F5","role":"decision"},{"hex":"#F8DDB0","role":"fill"},{"hex":"#64748B","role":"connector"},{"hex":"#17243A","role":"text"}],
+  "simulations": {
+    "protanopia": {"colors":["#5375B5","#B9A200","#9A9271"],"min_delta_e":51.56},
+    "deuteranopia": {"colors":["#3B67B1","#CAB411","#8A8676"],"min_delta_e":55.69},
+    "tritanopia": {"colors":["#008289","#FB8C87","#009E92"],"min_delta_e":16.97}
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "tests": 21,
+  "failures": [
+    "test_discovery_is_independent_of_the_default_loader_root (test_package.WatchdogTests.test_discovery_is_independent_of_the_default_loader_root)"
+  ],
+  "errors": [],
+  "skipped": [],
+  "cleanup": "not verified: all test-created directories and files retained",
+  "artifact_root": "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\0366ddd3f87f460cb9348ad24a81a751",
+  "retained_unlinks": []
+}

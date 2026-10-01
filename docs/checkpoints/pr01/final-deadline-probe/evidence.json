@@ -1,0 +1,23 @@
+{
+  "probe": "mocked clock and processes only; no child launched or terminated",
+  "outer_timeout_seconds": 200,
+  "outer_call_line": 299,
+  "events_seconds_from_outer_launch": [
+    [
+      "metadata_finished",
+      30.0
+    ],
+    [
+      "worker_timeout",
+      210.0
+    ],
+    [
+      "owned_tree_cleanup_finished",
+      225.0
+    ]
+  ],
+  "watchdog_return_code": 1,
+  "watchdog_total_seconds": 225.0,
+  "worker_still_running_at_outer_deadline": true,
+  "cleanup_finished_after_outer_deadline": true
+}

@@ -1,0 +1,14 @@
+{
+  "tests": 84,
+  "failures": [],
+  "errors": [],
+  "skipped": [],
+  "cleanup": "not verified: all test-created directories and files retained",
+  "artifact_root": "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\a649b801ebec481c95e355fbf3df2fa1",
+  "retained_unlinks": [
+    {
+      "original": "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\a649b801ebec481c95e355fbf3df2fa1\\test-0d95c64a1f9f4421ab88eeb5d5a8199f\\assets\\c250e18c66aa46499e79f11b9094481f.png",
+      "retained": "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\a649b801ebec481c95e355fbf3df2fa1\\retained-unlinks\\114266e590ab446b84d44304f9e67eea-c250e18c66aa46499e79f11b9094481f.png"
+    }
+  ]
+}

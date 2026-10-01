@@ -21,7 +21,7 @@ from .demo import seed_demo
 from .figures import suggest_panels, validate_bbox
 from .hosting import WebAccess
 from .recommend import recommend
-from .statistics import families, eligible_panels
+from .statistics import families
 
 WEB = Path(__file__).parent / "web"
 

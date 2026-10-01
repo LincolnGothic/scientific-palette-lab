@@ -1,0 +1,76 @@
+{
+  "root": "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\windows-tree-owned-b4cfdae8726f412c9046a2f09e60d954",
+  "runs": [
+    {
+      "owned_launcher_pid": 19988,
+      "argv": [
+        "D:/Codex_skill/codex-runtimes/pr01-source-audit/Scripts/python.exe",
+        "-u",
+        "-c",
+        "import time; from http.server import HTTPServer; print(\"ready\",flush=True); time.sleep(60)"
+      ],
+      "taskkill_returncode": 0,
+      "stdout": "SUCCESS: The process with PID 7732 (child process of PID 19988) has been terminated.\nSUCCESS: The process with PID 19988 (child process of PID 31720) has been terminated.\n",
+      "stderr": "",
+      "stdout.log": "rename round trip passed",
+      "stderr.log": "rename round trip passed"
+    },
+    {
+      "owned_launcher_pid": 22464,
+      "argv": [
+        "D:/Codex_skill/codex-runtimes/pr01-source-audit/Scripts/python.exe",
+        "-u",
+        "-c",
+        "import time; from http.server import HTTPServer; print(\"ready\",flush=True); time.sleep(60)"
+      ],
+      "taskkill_returncode": 0,
+      "stdout": "SUCCESS: The process with PID 21132 (child process of PID 22464) has been terminated.\nSUCCESS: The process with PID 22464 (child process of PID 31720) has been terminated.\n",
+      "stderr": "",
+      "stdout.log": "rename round trip passed",
+      "stderr.log": "rename round trip passed"
+    },
+    {
+      "owned_launcher_pid": 20804,
+      "argv": [
+        "D:/Codex_skill/codex-runtimes/pr01-source-audit/Scripts/python.exe",
+        "-u",
+        "-c",
+        "import time; from http.server import HTTPServer; print(\"ready\",flush=True); time.sleep(60)"
+      ],
+      "taskkill_returncode": 0,
+      "stdout": "SUCCESS: The process with PID 27208 (child process of PID 20804) has been terminated.\nSUCCESS: The process with PID 20804 (child process of PID 31720) has been terminated.\n",
+      "stderr": "",
+      "stdout.log": "rename round trip passed",
+      "stderr.log": "rename round trip passed"
+    },
+    {
+      "owned_launcher_pid": 24156,
+      "argv": [
+        "D:/Codex_skill/codex-runtimes/pr01-source-audit/Scripts/python.exe",
+        "-u",
+        "-c",
+        "import time; from http.server import HTTPServer; print(\"ready\",flush=True); time.sleep(60)"
+      ],
+      "taskkill_returncode": 0,
+      "stdout": "SUCCESS: The process with PID 21136 (child process of PID 24156) has been terminated.\nSUCCESS: The process with PID 24156 (child process of PID 31720) has been terminated.\n",
+      "stderr": "",
+      "stdout.log": "rename round trip passed",
+      "stderr.log": "rename round trip passed"
+    },
+    {
+      "owned_launcher_pid": 23080,
+      "argv": [
+        "D:/Codex_skill/codex-runtimes/pr01-source-audit/Scripts/python.exe",
+        "-u",
+        "-c",
+        "import time; from http.server import HTTPServer; print(\"ready\",flush=True); time.sleep(60)"
+      ],
+      "taskkill_returncode": 0,
+      "stdout": "SUCCESS: The process with PID 8588 (child process of PID 23080) has been terminated.\nSUCCESS: The process with PID 23080 (child process of PID 31720) has been terminated.\n",
+      "stderr": "",
+      "stdout.log": "rename round trip passed",
+      "stderr.log": "rename round trip passed"
+    }
+  ],
+  "deletion": "none; owned logs retained"
+}

@@ -1,0 +1,11 @@
+{
+  "tests": 20,
+  "failures": [
+    "test_installed_call_allows_watchdog_to_finish_owned_cleanup (test_package.InstalledDeadlineTests.test_installed_call_allows_watchdog_to_finish_owned_cleanup)"
+  ],
+  "errors": [],
+  "skipped": [],
+  "cleanup": "not verified: all test-created directories and files retained",
+  "artifact_root": "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\cd2ea6a6e8624a7aa2b3aa402ff15586",
+  "retained_unlinks": []
+}

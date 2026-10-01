@@ -1,0 +1,17 @@
+{
+  "expected_installed_asset": "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\task4-runtime-ca0cf664b4874a45b4bdc6178f35eaea\\palette-distribution-05a2006ff8a24a6b8685b20612732079\\venv\\Lib\\site-packages\\palette_lab\\web\\app.js",
+  "ordinary_calls": [
+    "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\task4-runtime-ca0cf664b4874a45b4bdc6178f35eaea\\palette-distribution-05a2006ff8a24a6b8685b20612732079\\venv\\Lib\\site-packages\\palette_lab\\web\\app.js",
+    "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\task4-runtime-ca0cf664b4874a45b4bdc6178f35eaea\\palette-distribution-05a2006ff8a24a6b8685b20612732079\\venv\\Lib\\site-packages\\palette_lab\\web\\app.js",
+    "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\task4-runtime-ca0cf664b4874a45b4bdc6178f35eaea\\palette-distribution-05a2006ff8a24a6b8685b20612732079\\venv\\Lib\\site-packages\\palette_lab\\web\\app.js",
+    "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\task4-runtime-ca0cf664b4874a45b4bdc6178f35eaea\\palette-distribution-05a2006ff8a24a6b8685b20612732079\\venv\\Lib\\site-packages\\palette_lab\\web\\app.js"
+  ],
+  "explicit_mutation_fixture_calls": [
+    "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\52449a82278b4f9584de7c6f2f614f51\\test-15db404c32014f3696d4a1cb2f8565cd\\missing-start.js",
+    "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\52449a82278b4f9584de7c6f2f614f51\\test-15db404c32014f3696d4a1cb2f8565cd\\missing-end.js",
+    "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\52449a82278b4f9584de7c6f2f614f51\\test-15db404c32014f3696d4a1cb2f8565cd\\duplicate-start.js",
+    "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\52449a82278b4f9584de7c6f2f614f51\\test-15db404c32014f3696d4a1cb2f8565cd\\duplicate-end.js",
+    "F:\\codex\\Project Plan\\pr01-implementation\\artifacts\\52449a82278b4f9584de7c6f2f614f51\\test-15db404c32014f3696d4a1cb2f8565cd\\reordered.js"
+  ],
+  "all_ordinary_calls_use_installed": true
+}

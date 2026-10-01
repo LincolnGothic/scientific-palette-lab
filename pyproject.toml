@@ -7,7 +7,10 @@ name = "scientific-palette-lab"
 version = "0.1.0"
 description = "Reviewed chart and flowchart palette mining for Nature, Science and Cell"
 requires-python = ">=3.10"
-dependencies = ["numpy>=1.24", "Pillow>=10"]
+dependencies = ["numpy>=1.24", "Pillow>=10.1"]
+
+[project.optional-dependencies]
+dev = ["ruff==0.13.3", "build==1.3.0", "PyYAML==6.0.3"]
 
 [project.scripts]
 palette-lab = "palette_lab.__main__:main"
@@ -17,3 +20,13 @@ palette_lab = ["web/*"]
 
 [tool.setuptools.packages.find]
 include = ["palette_lab*"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "RUF100"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/test_pipeline.py" = ["E701", "E702"]

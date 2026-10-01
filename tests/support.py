@@ -1,4 +1,5 @@
 """Portable, bounded server ownership for subprocess and HTTP tests."""
+
 from contextlib import contextmanager
 import json
 import os
@@ -12,9 +13,13 @@ import urllib.request
 
 
 def server_environment():
-    env = {key: value for key, value in os.environ.items()
-           if key.upper() != "PORT" and not key.upper().startswith("PALETTE_")
-           and key.upper() != "RENDER_EXTERNAL_URL"}
+    env = {
+        key: value
+        for key, value in os.environ.items()
+        if key.upper() != "PORT"
+        and not key.upper().startswith("PALETTE_")
+        and key.upper() != "RENDER_EXTERNAL_URL"
+    }
     env.update(PYTHONUNBUFFERED="1", PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
     return env
 
@@ -40,19 +45,26 @@ def _tail(path):
 
 
 def diagnostics(process, stdout_path, stderr_path, deadline, directory, url=None, error=None):
-    return (f"pid={process.pid}, returncode={process.poll()}, deadline={deadline:.3f}, "
-            f"data directory={directory}, last URL={url}, last HTTP error={error}\n"
-            f"stdout:\n{_tail(stdout_path)}\nstderr:\n{_tail(stderr_path)}")
+    return (
+        f"pid={process.pid}, returncode={process.poll()}, deadline={deadline:.3f}, "
+        f"data directory={directory}, last URL={url}, last HTTP error={error}\n"
+        f"stdout:\n{_tail(stdout_path)}\nstderr:\n{_tail(stderr_path)}"
+    )
 
 
 def wait_for_url(process, stdout_path, stderr_path, deadline):
     while True:
-        match = re.search(r"^Scientific Palette Lab → (http://127\.0\.0\.1:(\d+))\r?\n",
-                          _tail(stdout_path), re.MULTILINE)
+        match = re.search(
+            r"^Scientific Palette Lab → (http://127\.0\.0\.1:(\d+))\r?\n",
+            _tail(stdout_path),
+            re.MULTILINE,
+        )
         if match and 0 < int(match.group(2)) <= 65535:
             return match.group(1)
         if process.poll() is not None or time.monotonic() >= deadline:
-            raise AssertionError(diagnostics(process, stdout_path, stderr_path, deadline, stdout_path.parent))
+            raise AssertionError(
+                diagnostics(process, stdout_path, stderr_path, deadline, stdout_path.parent)
+            )
         time.sleep(0.05)
 
 
@@ -65,7 +77,12 @@ def running_server(command, cwd, directory, env, startup_timeout=30):
     url, last_error = None, None
     with stdout_path.open("wb") as stdout, stderr_path.open("wb") as stderr:
         process = subprocess.Popen(command, cwd=cwd, env=env, stdout=stdout, stderr=stderr)
-        describe = lambda: diagnostics(process, stdout_path, stderr_path, deadline, directory, url, last_error)
+
+        def describe():
+            return diagnostics(
+                process, stdout_path, stderr_path, deadline, directory, url, last_error
+            )
+
         try:
             url = wait_for_url(process, stdout_path, stderr_path, deadline)
             opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))

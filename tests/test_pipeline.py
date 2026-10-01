@@ -1,9 +1,7 @@
 import io
-import json
 import os
 import tempfile
 import unittest
-import urllib.parse
 from pathlib import Path
 
 import numpy as np
@@ -13,7 +11,6 @@ from palette_lab.app import Application
 from palette_lab.colors import rgb_to_lab, extract_palette, palette_distance, accessibility, contrast, delta_e
 from palette_lab.config import Study
 from palette_lab.corpus import collect, excluded_record, main_figures, match_media, matches_journal, select_version, normalize_url
-from palette_lab.figures import suggest_panels, validate_bbox
 from palette_lab.recommend import recommend
 from palette_lab.statistics import families
 from palette_lab.store import Store

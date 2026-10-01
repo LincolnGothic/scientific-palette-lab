@@ -1,6 +1,20 @@
-# First-release validation · 30 September 2026
+# Validation evidence
 
-## Implementation checks
+## Current engineering verification
+
+The [development guide](docs/DEVELOPMENT.md) documents the current commands, adopted scope, report fields and artifact names. Use [Engineering CI workflow runs](https://github.com/LincolnGothic/scientific-palette-lab/actions/workflows/ci.yml) to select the run associated with the current implementation head and confirm its actual tested SHA, which may be a PR merge-test commit. The final implementation PR description will identify the reviewed base, implementation head, tested SHA and exact accepted run URL. Inspect every required job and its artifacts; older green runs or uploaded diagnostics alone do not prove current success.
+
+Derive current source and installed counts from the generated JSON reports (`testsRun`, `discovered`, `failures`, `errors`, `skips`, `status` and `remote_attempts`), including `distribution.json`'s `checks.unit_suite.result`. Read log/phase evidence for builds, quality, Render configuration and Docker separately. No fixed current total is maintained here. Hosted matrix, minimum-runtime, actual Docker and ordinary physical cleanup gates remain pending until the corresponding published run succeeds.
+
+An independent Windows review of the original base found **35 tests: 33 passed, one failure and one error**. The historical “35 tests passed” statement below is preserved as a release claim, not current verified evidence. All 35 original case IDs remain; portability fixes and additional deterministic fixtures have since passed local retained source/installed checks. Those runs retain test artifacts and do not establish ordinary cleanup or hosted execution. The production changes are limited to CLI startup diagnostics, one unused import and dependency floors; scientific module, frontend, storage, configuration, demo, Dockerfile, Render and run.sh bodies remain unchanged.
+
+Engineering tests protect the existing scientific contracts; they do not measure extraction accuracy on a representative real-figure benchmark. Historical live acquisition and browser observations below remain separate evidence and are not prerequisites for the offline suite.
+
+## Historical first-release record · 30 September 2026
+
+The following release statements and pilot observations are retained verbatim. Their dated outcomes and totals are historical and do not establish the current implementation head's CI status.
+
+### Historical implementation checks
 
 - **Hosted-mode checks passed:** the automated total is now **35 tests**, including password gating for UI/API/assets/exports, malformed credentials, external host/origin checks, minimal health response, and corpus survival across a server restart. JavaScript syntax and Python wheel packaging checks pass. The Render Blueprint parses with one instance, a persistent disk, and a required secret input. Docker is unavailable on this machine, so a container build and live deployment remain unverified. No hosting service or charges were activated.
 
@@ -11,7 +25,7 @@
 - **Local HTTP checks passed:** state, reviewed-publication gates, separate data/flowchart statistics, recommendations for every color count from 3 through 8 in both categories, source-backed CSV/JSON exports, and host/origin rejection.
 - **Browser checks passed:** compact and desktop layouts; dataset labels; separate chart/flowchart previews; 8-color controls; Science accepted-manuscript warning; extraction from a real Cell figure; selecting a synthetic chart's data-mark region to exclude annotation colors; re-extraction followed by review saving. No real publication panel was approved as part of this smoke test.
 
-## Live acquisition pilot
+### Historical live acquisition pilot
 
 This is a retrieval smoke test, not a representative statistical sample. Eight recent Nature records and selected final-version/accepted-manuscript candidates from the other two journals were used. Default years refer to the first publication date, which can precede the issue year.
 
@@ -31,7 +45,7 @@ Example source records:
 
 Collection queries, errors, license/version records, JATS, source URLs, and image checksums are preserved in `data/`. Earlier unsuccessful acquisition attempts remain visible in collection history; the subsequent corrected runs succeeded. The downloaded publication figures are all unreviewed. The application correctly reports no real-corpus palette findings before review.
 
-## Limits of these checks
+### Scientific limits of the historical checks
 
 Passing implementation tests does not establish extraction accuracy across real scientific figures. Composite figures can contain photographs, microscopy, gradients, text, and multiple unrelated palettes. The real Cell extraction correctly raised many-shade/composite warnings. Selecting a relevant region and confirming the result is essential.
 

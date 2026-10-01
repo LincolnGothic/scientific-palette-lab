@@ -15,6 +15,8 @@ bash run.sh
 
 Open **http://127.0.0.1:8765**. Only NumPy and Pillow are needed; no API key, external database, JavaScript build, or paid model is required. `run.sh` can also use an existing Codex bundled Python runtime containing these dependencies.
 
+The supported runtime is Python >=3.10 with NumPy >=1.24 and Pillow >=10.1. On Windows PowerShell, create a venv with `py -3.12 -m venv .venv`, install with `.\.venv\Scripts\python.exe -m pip install .`, and start with `.\.venv\Scripts\python.exe -m palette_lab serve`. See [development and verification](docs/DEVELOPMENT.md) for clean base/dev environments, constrained CI profiles, the bounded offline suite, scoped Ruff checks and installed-wheel validation. Node 22 is required by CI only for JavaScript verification, not application startup.
+
 If startup reports that port 8765 is already in use, an earlier instance may still be running. Open the URL above to use that instance, stop it with Ctrl+C in its terminal, or start another instance with `bash run.sh serve --port 8766`. The program reports the conflict without a traceback and does not stop the existing service.
 
 ```bash
@@ -36,9 +38,11 @@ bash run.sh collect --journals Science --pmcids PMC12483063 --include-manuscript
 # Another corpus snapshot or local port
 bash run.sh --data-dir ./another-study serve --port 8766
 
-# Automated checks, using the same Python environment
-.venv/bin/python -m unittest discover -s tests -v
+# Full bounded offline checks, using the same Python environment (Node on PATH)
+.venv/bin/python scripts/run_tests.py --timeout 180 --report ci-results/tests.json
 ```
+
+Current engineering evidence comes from [Engineering CI](https://github.com/LincolnGothic/scientific-palette-lab/actions/workflows/ci.yml) for the reviewed implementation head/tested SHA and its generated reports. [VALIDATION.md](VALIDATION.md) separates this evidence from historical release, acquisition and browser checks and from scientific benchmark limits. Hosted CI, real Docker and ordinary cleanup require their own completed runs; retained local checks do not establish those outcomes.
 
 ## Workflow
 

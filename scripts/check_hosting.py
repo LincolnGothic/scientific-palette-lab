@@ -80,6 +80,7 @@ def smoke_docker(image, report, report_path):
     detail = report["docker"]
     name = "palette-ci-" + uuid.uuid4().hex
     container = None
+    launch_attempted = False
     detail.update(status="running", container_name=name, image=image)
     write_report(report_path, report)
     try:
@@ -101,6 +102,7 @@ def smoke_docker(image, report, report_path):
             detail["base_image"]["status"] = "unknown: base digest absent from build log"
         detail["reproducibility_limit"] = "Floating Dockerfile base and dependency resolution"
         password = "public-ci-dummy-password"
+        launch_attempted = True
         container = docker_command(
             "run",
             "--detach",
@@ -188,11 +190,11 @@ def smoke_docker(image, report, report_path):
     except Exception as exc:
         detail.update(status="failed", error=repr(exc))
     finally:
-        if container:
+        if launch_attempted:
             try:
                 # docker logs writes application stderr to its own stderr channel too.
                 result = subprocess.run(
-                    ["docker", "logs", container],
+                    ["docker", "logs", name],
                     capture_output=True,
                     text=True,
                     encoding="utf-8",
@@ -208,17 +210,34 @@ def smoke_docker(image, report, report_path):
             except Exception as exc:
                 detail.update(status="failed", log_error=repr(exc))
             try:
-                docker_command("stop", "--time", "5", container, timeout=15)
+                docker_command("stop", "--time", "5", name, timeout=15)
                 detail["cleanup"] = (
                     "Owned container stopped; artifacts retained for runner disposal"
                 )
             except Exception as exc:
                 detail["stop_error"] = repr(exc)
                 try:
-                    docker_command("kill", container, timeout=10)
+                    docker_command("kill", name, timeout=10)
                     detail["cleanup"] = "Owned container force-stopped"
                 except Exception as kill_error:
-                    detail.update(status="failed", cleanup_error=repr(kill_error))
+                    try:
+                        inspection = subprocess.run(
+                            ["docker", "container", "inspect", name],
+                            capture_output=True,
+                            text=True,
+                            encoding="utf-8",
+                            timeout=10,
+                        )
+                        absent = inspection.returncode != 0 and (
+                            f"No such container: {name}" in inspection.stderr
+                        )
+                    except Exception as inspect_error:
+                        absent = False
+                        detail["cleanup_inspect_error"] = repr(inspect_error)
+                    if absent:
+                        detail["cleanup"] = "Owned container confirmed absent"
+                    else:
+                        detail.update(status="failed", cleanup_error=repr(kill_error))
         write_report(report_path, report)
 
 

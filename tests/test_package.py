@@ -9,10 +9,12 @@ import json
 import os
 from pathlib import Path
 import sqlite3
+import subprocess
 import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+from types import ModuleType, SimpleNamespace
 
 import palette_lab
 from palette_lab.store import Store
@@ -23,6 +25,13 @@ spec = importlib.util.spec_from_file_location(
 )
 watchdog_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(watchdog_module)
+hosting_spec = importlib.util.spec_from_file_location(
+    "palette_test_hosting", PROJECT / "scripts/check_hosting.py"
+)
+hosting_module = importlib.util.module_from_spec(hosting_spec)
+# Docker ownership tests exercise no YAML parsing; base tests need no dev extras.
+with patch.dict(sys.modules, {"yaml": ModuleType("yaml"), "run_tests": watchdog_module}):
+    hosting_spec.loader.exec_module(hosting_module)
 
 
 class PackageTests(unittest.TestCase):
@@ -140,6 +149,29 @@ class PackageTests(unittest.TestCase):
 
 
 class WatchdogTests(unittest.TestCase):
+    def test_worker_asset_substitution_reaches_actual_harness_command(self):
+        import test_exports
+
+        with (
+            patch.object(test_exports, "APP_JS", test_exports.APP_JS),
+            patch.object(importlib.resources, "files", return_value=Path("installed-sentinel")),
+        ):
+            code, report = self.worker_case(
+                "import unittest,test_exports,importlib.resources\n"
+                "from unittest.mock import patch\n"
+                "from pathlib import Path\n"
+                "class Consumer(unittest.TestCase):\n"
+                " def test_asset(self):\n"
+                "  case=test_exports.ExportTests(); case.node='node'\n"
+                "  with patch('test_exports.subprocess.run') as call: case.run_harness([])\n"
+                "  expected=Path(str(importlib.resources.files('palette_lab').joinpath('web','app.js')))\n"
+                "  self.assertEqual(Path(call.call_args.args[0][2]),expected)\n",
+                "test_asset_consumer_fixture.py",
+            )
+        self.assertEqual(code, 0, report)
+        self.assertEqual(report["testsRun"], 1)
+        self.assertEqual(report["export_asset"], str(Path("installed-sentinel/web/app.js")))
+
     def worker_case(self, body, filename="test_case.py"):
         directory = tempfile.TemporaryDirectory(dir=os.environ.get("RUNNER_TEMP"))
         self.addCleanup(directory.cleanup)
@@ -253,6 +285,92 @@ class WatchdogTests(unittest.TestCase):
         )
         self.assertEqual(result, 1)
         self.assertEqual(report["status"], "failed")
+
+
+class DockerOwnershipTests(unittest.TestCase):
+    def launch_case(
+        self, launch, stop_fails=False, kill_fails=False, image_fails=False, absent=False
+    ):
+        directory = tempfile.TemporaryDirectory(dir=os.environ.get("RUNNER_TEMP"))
+        self.addCleanup(directory.cleanup)
+        report_path = Path(directory.name) / "docker.json"
+        report = {"docker": {"status": "unexecuted"}}
+        calls = []
+        name = "palette-ci-" + "a" * 32
+
+        def run(command, **kwargs):
+            calls.append((command, kwargs["timeout"]))
+            if command[1] == "image":
+                if image_fails:
+                    return subprocess.CompletedProcess(command, 1, "", "image failure")
+                return subprocess.CompletedProcess(command, 0, '[{"Id":"sha256:fixture"}]', "")
+            if command[1] == "run":
+                self.assertEqual(command[command.index("--name") + 1], name)
+                if launch == "timeout":
+                    raise subprocess.TimeoutExpired(command, kwargs["timeout"])
+                return subprocess.CompletedProcess(
+                    command, 1, "", "daemon created fixture then failed"
+                )
+            if command[1] == "logs":
+                return subprocess.CompletedProcess(command, 0, "owned stdout", "owned stderr")
+            if command[1] == "stop" and stop_fails:
+                return subprocess.CompletedProcess(command, 1, "", "fixture stop failure")
+            if command[1] == "kill" and kill_fails:
+                return subprocess.CompletedProcess(command, 1, "", "fixture kill failure")
+            if command[1:3] == ["container", "inspect"] and absent:
+                return subprocess.CompletedProcess(command, 1, "[]", f"No such container: {name}")
+            return subprocess.CompletedProcess(command, 0, "", "")
+
+        with (
+            patch.object(hosting_module.uuid, "uuid4", return_value=SimpleNamespace(hex="a" * 32)),
+            patch.object(hosting_module.subprocess, "run", side_effect=run),
+        ):
+            hosting_module.smoke_docker("fixture-image", report, report_path)
+        return name, calls, report["docker"]
+
+    def test_launch_timeout_and_failure_still_log_and_stop_owned_name(self):
+        for launch in ("timeout", "failure"):
+            with self.subTest(launch=launch):
+                name, calls, detail = self.launch_case(launch)
+                self.assertEqual(detail["status"], "failed")
+                self.assertEqual(
+                    calls[-2:],
+                    [(["docker", "logs", name], 10), (["docker", "stop", "--time", "5", name], 15)],
+                )
+                self.assertIn("owned stdout", Path(detail["logs"]).read_text())
+                self.assertIn("owned stderr", Path(detail["logs"]).read_text())
+                self.assertIn("Owned container stopped", detail["cleanup"])
+
+    def test_launch_failure_force_stops_only_owned_name_after_stop_failure(self):
+        name, calls, detail = self.launch_case("failure", stop_fails=True)
+        self.assertEqual(calls[-1], (["docker", "kill", name], 10))
+        self.assertIn("stop_error", detail)
+        self.assertEqual(detail["cleanup"], "Owned container force-stopped")
+        self.assertEqual(detail["status"], "failed")
+
+    def test_launch_failure_preserves_cleanup_failure(self):
+        name, calls, detail = self.launch_case("failure", stop_fails=True, kill_fails=True)
+        self.assertEqual(
+            calls[-2:],
+            [(["docker", "kill", name], 10), (["docker", "container", "inspect", name], 10)],
+        )
+        self.assertIn("cleanup_error", detail)
+        self.assertEqual(detail["status"], "failed")
+
+    def test_uncertain_launch_with_confirmed_absence_does_not_claim_cleanup_failure(self):
+        name, calls, detail = self.launch_case(
+            "failure", stop_fails=True, kill_fails=True, absent=True
+        )
+        self.assertEqual(calls[-1], (["docker", "container", "inspect", name], 10))
+        self.assertEqual(detail["cleanup"], "Owned container confirmed absent")
+        self.assertNotIn("cleanup_error", detail)
+        self.assertEqual(detail["status"], "failed")
+
+    def test_prelaunch_image_failure_touches_no_container(self):
+        _name, calls, detail = self.launch_case("failure", image_fails=True)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][0][:3], ["docker", "image", "inspect"])
+        self.assertEqual(detail["status"], "failed")
 
 
 if __name__ == "__main__":

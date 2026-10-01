@@ -204,7 +204,9 @@ class ExportTests(unittest.TestCase):
                 "ExportTests require Node.js on PATH; install/use Node before running test_exports.py."
             )
 
-    def run_harness(self, cases, source=APP_JS):
+    def run_harness(self, cases, source=None):
+        if source is None:
+            source = APP_JS
         return subprocess.run(
             [self.node, str(HERE / "export_harness.cjs"), str(source)],
             input=json.dumps({"cases": cases}),

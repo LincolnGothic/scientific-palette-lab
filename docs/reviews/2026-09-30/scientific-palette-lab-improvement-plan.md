@@ -38,7 +38,7 @@ All tracked Python, JavaScript, HTML, CSS, configuration, tests, and text docume
 - `node --check palette_lab/web/app.js` passed.
 - Exercised the existing categorical Python export function in a minimal Node harness; its output contained real newlines and parsed into four Python statements. This was one export smoke check, not full browser E2E testing.
 - Reviewed Docker/Render configuration statically. Docker was unavailable; no container build or live deployment was verified. Wheel packaging and Python 3.10/3.11/3.13 matrices were not rerun in this review.
-- The repository has no tracked `.github` workflows or standard license/contribution/citation files. The checkout remained clean after verification.
+- The repository has no tracked `.github` workflows or standard license/contribution/citation files. The checkout remained clean after verification. A subsequent GitHub check of documentation PR #1 at `4808a7b5fb18fd80660f30c24f80c74954343cc0` found zero workflow runs and zero commit statuses. This is a documented local audit, not independent CI verification or a green application baseline.
 
 To respect the user's deletion rules, the audit harness retained generated test directories and duplicate-upload assets rather than deleting them. It also avoided Windows sandbox permission problems from the standard temporary-directory constructor by using ordinary directories. Cleanup behavior was therefore **not tested**. The first attempt encountered sandbox temporary-directory permission errors; those are not counted as application failures. The final run and its two remaining failures are recorded in `baseline-verification.json` beside this document.
 
@@ -80,7 +80,7 @@ Other proposed defaults, to be confirmed before executing their corresponding PR
 | Hosting scope | One personal/trusted-group workspace | Multi-user institutional access needs identities, permissions, durable workers and a separate architecture decision |
 | Core date range | A user-selected closed interval; initial preset 2023-01-01 through 2025-12-31 | Keep the legacy Flagship 2021–2025 preset; partial 2026 is a separate explicit option, never an implicit rolling window |
 | JIF rule | Optional strict `>5` only when an authorized metrics snapshot is supplied | None, `>3`, `>10`, custom; if a requested metric is missing, mark unresolved and do not pretend the criterion passed |
-| Metric-year rule | Pin one authorized metric year for the initial study | Publication-year matching or latest-available-at-freeze are separate policies with different temporal biases |
+| Metric-year rule | Pin one authorized metric year and source-release version; state the snapshot-based population in the manifest and UI (§5) | Publication-year matching or latest-available-at-publication are later, separate policies; they require explicit release-date availability rules |
 | Corpus target | About 500 eligible acquired papers, independently tracked from analyzable panels | A 500-paper final-analysis target needs a prespecified reserve/replenishment policy and will usually require more candidates |
 | Paper version | Final published versions by default | Licensed manuscripts remain opt-in, explicitly labeled and analyzed separately |
 | Main figures | Include main research figures, exclude supplementary/extended-data by default | Preserve uncertain figure-scope decisions; do not silently discard unrecognized labels |
@@ -187,21 +187,29 @@ Treat the initial study as a **balanced descriptive sample of a defined PMC-acce
 1. Discover the entire configured date/type/source frame, with cursor checkpoints and a bounded query partition strategy. Persist snapshot identifiers and metadata. A scan cap produces a labeled pilot, never a complete-frame claim.
 2. Resolve journal ISSNs/aliases and reusable version availability. Apply the selected metrics snapshot and strict experimental policy. Keep Methods-based eligibility pending until the relevant text is acquired.
 3. Derive broad subject groups reproducibly from available MeSH/JATS/metadata. Save taxonomy version, mapping rules and assigned evidence. Use a deterministic primary group for sampling; retain all other subject tags for analysis. Missing terms are an `unclassified` stratum, not grounds for silent omission.
-4. Use **year × broad subject** as primary strata. Allocate about equally across years; within year use square-root-of-frame-size allocation with a small minimum for viable groups. This reduces dominance without forcing an enormous sparse cross-product.
-5. Start with a maximum of **25 papers per journal** in a 500-paper target and a broad-subject ceiling of approximately **35%**. These are prespecified balancing choices, not claims that those proportions represent publishing output. Quotas are proposed defaults and must be checked for feasibility before sampling.
-6. Use a seeded generator or stable keyed random priority over canonical identifiers; save the generator/version, seed, tie-break rule, full priority list, initial allocations and cap policy. Sampling must be invariant to provider response order.
-7. Create a prespecified ordered reserve, initially roughly **50% of the target**. A pilot estimates eligibility/acquisition yield and may justify a larger reserve through a new study revision. Draw replacements from the same stratum for prespecified article ineligibility/unavailable acquisition only. Record the original selected article, reason and replacement. Never replace a paper because its palettes are unattractive or difficult to analyze.
-8. Freeze both the original draw and the acquired eligible cohort. Stop at the recorded target or an explained shortfall. If figure processing later fails, retain the selected paper and report missingness; do not replenish with easier figures to obtain a favorable result.
+4. Use **year × broad subject** as primary strata. Allocate about equally across years; within each year allocate proportionally to the frozen broad-subject frame counts using largest remainders and a deterministic tie-break. Small strata may receive zero sampled papers; report their frame counts and coverage rather than adding minimum quotas.
+5. Apply one generous journal dominance cap: a proposed **20% of the target**, or **100 papers per journal** for Core-500. Record the resolved integer cap before drawing. Do not combine this with a subject ceiling, square-root allocation or minimum-group quotas in the initial design.
+6. Use a seeded generator or stable keyed random priority over canonical identifiers; save the generator/version, seed, tie-break rule, full priority list, allocations and cap policy. Sampling must be invariant to provider response order. Check the joint stratum-allocation/journal-cap feasibility before drawing; an unmet quota remains a reported shortfall unless an explicit study revision changes the design.
+7. Freeze an ordered reserve from the remaining candidates in each stratum. Its acquisition budget follows pilot-estimated eligibility/acquisition yield and the recorded stopping rule, rather than a compulsory reserve percentage. Draw replacements in that order, maintaining the journal cap, only for predetermined article-ineligibility or acquisition-unavailability reasons. Record the original selection, reason and replacement. A changed reserve budget or replacement policy creates a study revision.
+8. Freeze both the original draw and the acquired eligible cohort. Stop at the recorded target or an explained shortfall. Report the full candidate-frame and selected/acquired cohort compositions side by side by year, subject and journal, including cap-bound exclusions and missing analysis.
 
-If five years are selected, the initial year allocation is about 100 each; for three years, approximately 167/167/166. Exact quotas use a documented largest-remainder allocation and deterministic handling of sparse strata. Journals remain a secondary balancing constraint rather than a giant journal×field×year grid. Before acquisition, report whether the available frame can satisfy the journal cap; any relaxation needs a recorded study revision, not an invisible sampler adjustment.
+For five years the year quotas are approximately 100 each; for three years, approximately 167/167/166. Journals supply the single secondary constraint rather than a journal×field×year grid. The generous cap limits domination while retaining more of the observed subject composition. The corpus remains a descriptive sample of the PMC-accessible frame.
+
+**Hard study invariant — article versus figure sampling unit:** paper selection must not depend on the number, attractiveness, palette, or machine-readability of its figures after selection. Inventory all in-scope main figures for each selected paper. A paper with no analyzable figure remains a missing-analysis case; it is not replaced to improve analysis yield. Only the eligibility/acquisition replacement reasons frozen before figure analysis can trigger reserve substitution. Figure-type/difficulty stratification belongs to benchmark or QC selection and must not feed back into the Core paper draw.
 
 **Important statistical qualification:** journal caps, reserve substitution, and post-acquisition eligibility make simple `n_h/N_h` weights incorrect for this constrained design. v0.2 should publish descriptive results and the full selection process, with inclusion probability left null unless justified. For frame-level inference in v0.5, either adopt a tractable probability design with known inclusion probabilities or validate design-specific probabilities with simulation and account for nonresponse. Do not report a weighted population estimate just by inverting observed cell counts. OA access and unknown experimental eligibility still limit generalization.
 
 ### Journal metrics
 
-Import an authorized CSV/JSON table containing journal name, print/electronic ISSN or ISSN-L, metric name (`JIF`), numeric value, metric year, source and source version. Validate ISSN format/checksum, nonnegative finite values, duplicate keys and conflicting aliases. Store the complete file hash, import time, authorization/reuse note and mapping decisions. Keep different sources/years as different records.
+Import an authorized CSV/JSON table containing journal name, print/electronic ISSN or ISSN-L, metric name (`JIF`), numeric value, metric year, source-release year/edition, source and source version. Validate ISSN format/checksum, nonnegative finite values, duplicate keys and conflicting aliases. Store the complete file hash, import time, authorization/reuse note and mapping decisions. Keep different sources/years as different records.
 
 Threshold comparison must be explicit (`>` versus `>=`); values equal to 5 fail a `>5` rule. Missing metrics are **unknown**, not zero. A no-threshold study does not need metrics. A strict-threshold study cannot be finalized until unresolved metric cases are resolved or explicitly excluded. CiteScore/SJR may be separate named metrics later; they must never silently substitute for JIF.
+
+**Required temporal interpretation:** `metric_year_policy=pinned_snapshot` describes journals using one recorded metrics snapshot, irrespective of each article's publication year. The study manifest must include `publication_start/end`, `metric_year`, `source_release_year/edition`, `source_version`, `import_hash`, operator/value and a generated `population_statement`. Show that statement verbatim in the study UI and exported analysis manifest.
+
+For example, with a 2023–2025 publication interval and an authorized 2026 JCR release containing 2025 JIF data, the statement is: **“Papers published in 2023–2025 in journals whose 2025 JIF exceeded 5 according to the pinned 2026 JCR snapshot.”** Add: **“This does not establish that JIF exceeded 5 when each paper was published.”** Clarivate distinguishes the 2026 release from its 2025 data; do not call the release year the metric year. For other authorized snapshots substitute the recorded years, source and comparison. [Clarivate 2026 release](https://clarivate.com/news/clarivate-releases-journal-citation-reports-2026/).
+
+Publication-year matching can become a separate later policy. It must specify whether it uses the metric labeled for that year or the latest release actually available on the publication date; those are different populations and must never be substituted silently.
 
 JIF is a journal sampling attribute. It must not enter extraction confidence, figure-quality labels, suitability scores or benchmark truth. Clarivate itself identifies JIF as a journal-level metric. Authorized imports are preferable to fabricated or scraped values. [Clarivate JCR guidance](https://clarivate.com/academia-government/scientific-and-academic-research/research-funding-analytics/journal-citation-reports/), [journal API](https://developer.clarivate.com/apis/wos-journal).
 
@@ -211,7 +219,21 @@ Keep SQLite, foreign keys and WAL. Use numbered, checksummed SQL migrations with
 
 The names below are proposed, and the columns describe the intended contracts rather than executed DDL. UUID/text IDs may remain, but uniqueness constraints must protect scientific identity independently of those IDs.
 
-### Foundation tables for v0.2
+**Mandatory per-PR schema rule:** each migration adds only tables/columns consumed by that PR's working read/write path and meaningful verification. The full table list is a destination across releases, not PR 02's migration checklist. A future foreign key or evidence field does not justify creating its target table early; introduce the field and constraint together when the consumer exists.
+
+| Introducing PR | Permitted additions and immediate consumer |
+|---|---|
+| PR 02 | `schema_migrations`, `algorithm_versions`, `result_revisions`, `annotations`, plus only necessary legacy-row revision/selection fields; migration runner, result-history reads and review/re-extraction writes |
+| PR 03 | `datasets`, `study_versions`, `journals`, `journal_identifiers`, `articles`, `article_identifiers`, `study_articles`, `analysis_runs`, `analysis_members`; named membership, canonical identity, frozen study/analysis manifests and statistics selection |
+| PR 04 | `metric_imports`, `journal_metrics`; authorized import and explicit eligibility evaluator |
+| PR 05 | `article_versions`, `pipeline_runs`, `acquisition_attempts`, `assets`, `asset_sources`, and required figure/source/result bindings; persisted discovery/acquisition, original-byte inventory and provenance queries |
+| PR 06 | Only selection fields consumed by the sampler in existing membership/run records; frame/allocations/reserve remain immutable JSON assets |
+| PR 07 | `jobs`; durable worker recovery and UI status/checkpoints |
+| PR 08 | `benchmark_members`, `validation_runs`; split isolation, labels and offline evaluation |
+
+PR 02 snapshots legacy inputs as hashes/paths and evidence JSON, references existing paper/panel IDs, and preserves the legacy analysis through exact selected revisions. Study, article-version, asset and run bindings are added by their owning later migrations. PR 04 retains the metrics file as a hashed immutable import artifact until PR 05 introduces the shared asset catalog. Fresh installs replay the same staged migrations; no unused future tables or placeholder foreign-key targets are created.
+
+### Staged table contracts through v0.2
 
 | Table | Principal columns and constraints | Why it is needed |
 |---|---|---|
@@ -219,7 +241,7 @@ The names below are proposed, and the columns describe the intended contracts ra
 | `study_versions` | id, dataset_id FK, study_name, revision, definition_json, definition_hash, frozen_at, supersedes_id; unique name/revision | Immutable eligibility/sampling/analysis policy |
 | `journals` | id, canonical_name, ISSN-L if known, metadata_json | Names change; identifiers should drive matching |
 | `journal_identifiers` | journal_id FK, scheme, normalized_value, provenance; unique scheme/value | Print/electronic ISSN and source aliases |
-| `metric_imports` | id, metric_name, source, source_version, asset_id, hash, imported_at, rights_note | Authorized metrics snapshot and provenance |
+| `metric_imports` | id, metric_name, metric_year, source_release_year/edition, source, source_version, artifact_path/hash, asset_id when available, imported_at, rights_note | Authorized metrics snapshot and provenance |
 | `journal_metrics` | journal_id FK, import_id FK, metric_year, value; unique journal/import/year | No hard-coded current JIF values |
 | `articles` | id, journal_id FK, title, publication_date/year, article_type, metadata_json | Canonical paper identity independent of retrieval |
 | `article_identifiers` | article_id FK, namespace (`doi/pmcid/pmid/provider/synthetic`), normalized_value; unique namespace/value | Deduplication and identifier-resolution audit |
@@ -273,7 +295,7 @@ Synthetic generation manifests can be assets linked to the Synthetic dataset and
 ### Migration and backward compatibility
 
 1. Create a verified SQLite online backup plus immutable asset inventory. Never copy only a live `corpus.sqlite3` while ignoring WAL and active writes.
-2. Recognize v0.1 exactly, register its baseline algorithm IDs and migrate legacy real papers into **Flagship**, demo papers into **Synthetic/illustrative**.
+2. In PR 02, recognize v0.1 exactly and register its baseline algorithm IDs. In PR 03, attach legacy real papers to **Flagship** and demo papers to **Synthetic/illustrative** using the newly introduced dataset tables.
 3. Preserve paper, figure and panel IDs. Import existing reviews as legacy annotations with their actual completeness recorded; do not invent missing input versions, reviewer identities, licenses or timestamps.
 4. Create immutable revisions from current panel state. Existing current-state rows remain readable as projections while callers migrate. Do not drop old tables in v0.2.
 5. Alias API `dataset=real` to legacy Flagship and `dataset=demo` to illustrative Synthetic. New clients send explicit dataset/study/analysis IDs; invalid IDs return a clear error. Never change `real` to silently mean Core-500.
@@ -297,7 +319,21 @@ Begin with transparent agreement/veto rules. Require at least two relevant evide
 | LOW | Conflicting/unsupported/ambiguous evidence | Human correction required before inclusion |
 | UNKNOWN | Missing model/evidence/calibration | Behaves like pending, not HIGH |
 
-Proposed promotion target: at least **98% correctness** of automatically accepted task outputs with an appropriate one-sided 95% lower confidence bound, initially restricted to supported cases. With zero observed errors, roughly 150 independent cases are needed for a binomial lower bound near 98%; paper clustering and subgroup claims may require more. A small easy-only benchmark is insufficient. Do not choose a numerical model threshold such as 0.9 and call it calibrated HIGH.
+### Preregistered automatic-inclusion gate
+
+For each task/class scope, freeze the algorithm, correctness definition, supported inputs, evidence vetoes, score threshold, sampling protocol, reliability target and evaluation time before collecting the confirmatory QC labels. The proposed target is `p_min=0.98`; enabling HIGH requires the **one-sided lower confidence bound to strictly exceed 0.98**, not just observed accuracy ≥98%. Tune on development/calibration data only.
+
+Use a conservative paper-level gate to handle correlated outputs. Draw independent canonical article/duplicate groups at random from the intended automatic-acceptance scope, with no uncertainty/easy-case filtering. Audit all candidate accepted outputs for the task/class in each sampled group under a fixed protocol. A group is a success only if every audited output is correct; uncertain/unresolved truth cannot count as a success. For article eligibility, the article decision is the output. Thus the gated estimand is the probability that a randomly sampled paper group has fully correct accepted outputs for that scope; it is not a panel-weighted accuracy claim. Report per-output accuracy separately with paper-clustered uncertainty.
+
+Let `n` be independent audited paper groups and `k` fully correct groups. At one-sided error level `alpha=0.05`, the exact Clopper–Pearson lower bound is:
+
+`L = 0 if k=0; otherwise BetaQuantile(alpha; k, n-k+1)`.
+
+For `n=0`, the policy is unvalidated and remains disabled. Promote the task/class only when `L > p_min` and all prespecified support/evidence checks pass. With no errors, `L = alpha ** (1/n)`. At a single fixed evaluation with alpha 0.05, 49/50 correct independent groups gives a lower bound of approximately **0.9086**; even 50/50 gives approximately **0.9418**. It takes at least **149 error-free independent paper groups** for the bound to exceed 0.98; 150 panels from fewer papers do not meet that requirement. [Exact-binomial method](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats._result_classes.BinomTestResult.proportion_ci.html), [beta quantile definition](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.beta.html).
+
+Preregister the family of `m` task/class promotion claims and use `alpha=0.05/m` for simultaneous 95% coverage, or a separately justified multiplicity protocol; sample requirements then increase. Do not repeatedly peek at the same QC cohort until it passes. Specify one evaluation time, or preregister an alpha-spending/anytime-valid protocol for repeated attempts. Treat duplicates/shared paper versions as one group; disclose further laboratory/source dependence and revise the design if independent groups cannot be justified. For stratified QC, validate each preregistered scope with its matching random paper sample; do not pool unequal strata into an unweighted binomial gate.
+
+A targeted 100–150-panel benchmark supports baseline development and calibration, but is not a representative confirmatory QC sample and does not itself unlock HIGH. Continue random QC after promotion; an audited failure/shift can suspend the recorded policy and require fresh confirmation. Record k/n, bound, alpha, estimand, group identities, label status and policy version. Unsupported scopes remain pending or reviewed. An ordinary cluster bootstrap with zero observed errors must not be used to obtain a degenerate 100% reliability bound. A model score such as 0.9 is not a validated inclusion criterion.
 
 v0.2 installs the record/acceptance contract and experimental-rule baseline. It does not require manual palette review for every Core paper, nor does it assert broad automatic accuracy. Acquisition can finish while analysis remains pending. Later releases expand validated automatic acceptance rather than routing the entire corpus through a mandatory annotation campaign.
 
@@ -352,11 +388,13 @@ Split by generation template and base semantic example as well as random seed; c
 
 ### Real benchmark
 
-Recommended initial size: **approximately 300 panels** from roughly **60–100 papers**, with exhaustive labels for the chosen composite figures. Target the requested 200–500 range rather than thousands. Sample diverse real figures, including hard composites, no/ambiguous legends, dark backgrounds, small marks, gray controls, transparency, ramps, photos mixed with charts and both available vector and raster assets.
+Start with **100–150 well-chosen real panels** from a diverse set of paper/duplicate groups, with exhaustive labels for the chosen composite figures. Measure the baseline and reviewer effort before expanding. **Approximately 300 panels from roughly 60–100 papers** is a later planning target within the requested 200–500 range, reached only when coverage gaps or wide uncertainty justify more annotation; it is not a prerequisite for other v0.2 work. Sample diverse real figures, including hard composites, no/ambiguous legends, dark backgrounds, small marks, gray controls, transparency, ramps, photos mixed with charts and both available vector and raster assets.
 
 Pre-annotate with baseline detectors/extractors. Reviewers mostly confirm/correct boundaries, chart subtype, encoding, meaningful colors/roles, legends, uncertainty and license/source links. Use double review/adjudication on about 10–20% and all unresolved difficult labels. Record label uncertainty; raster figures may not reveal an exact original author HEX, so do not label an unknowable intrinsic value as perfect truth.
 
-Split at article/duplicate group level: approximately **120 development, 80 calibration and 100 locked-test panels**, adjusted to preserve paper grouping and class support. Counts are panel targets, not a promise that every class has enough examples. Rare classes need explicit support reporting and additional labels before class-specific automation claims. Test figures do not enter training, active learning or threshold tuning through another dataset or article version.
+Assign article/duplicate groups to development, calibration and locked test before model/threshold tuning. For an initial 150-panel release, an illustrative allocation is **60 development, 40 calibration and 50 locked-test panels**; scale down for a 100-panel pilot and adjust only to preserve whole paper groups and usable support. If justified expansion reaches approximately 300, **120/80/100** remains an illustrative allocation. Counts are targets, not prerequisites or evidence that each class is validated.
+
+Use development/calibration support counts and paper-level interval widths to identify underrepresented type/difficulty/source strata for expansion. Preregister the expansion priorities and labeling budget; add new paper groups and freeze their split before labels or candidate results are inspected. Keep previous test groups sealed, version membership additions, and publish the changed composition. Do not select additions or tune methods using locked-test outcomes. Rare classes remain unsupported until enough independent evidence exists; test figures never enter training, active learning or threshold tuning through another dataset or article version.
 
 Use development/calibration data for iterative comparison. Freeze candidate algorithms and thresholds before locked-test evaluation. Repeated access to test metrics can lead to adaptive overfitting even without training on images; log accesses and do not tune to the locked test. A fresh confirmatory set may be needed for v1.0 after repeated releases, while the original benchmark remains fixed for transparent historical comparisons.
 
@@ -403,8 +441,10 @@ Work sequence:
 
 **Why/problem:** protect reviewed provenance before new automation or source versions are introduced.  
 **Existing modules:** `store.py`, `app.py`, statistics callers.  
-**Files:** create `migrations.py`, `migrations/0001_legacy_adoption.sql`, `migrations/0002_study_results.sql`, `results.py`, `tests/test_migrations.py`, `tests/test_result_history.py`; modify store and review/extract routes.  
-**Compatibility:** database upgrade is required and old writers cannot use the upgraded database; keep legacy IDs/read projections, ΔE76 and reviewed-only policy. No destructive table removal.
+**Files:** create `migrations.py`, `migrations/0001_legacy_adoption.sql`, `migrations/0002_result_history.sql`, `results.py`, `tests/test_migrations.py`, `tests/test_result_history.py`; modify store and review/extract routes.  
+**Compatibility:** database upgrade is required and old writers cannot use the upgraded database; keep legacy IDs/read projections, ΔE76 and reviewed-only policy. No destructive table removal. PR 01's Windows fixes, CI and baseline checks must pass before this PR starts.
+
+**Schema boundary:** only the PR 02 additions listed in §6 are allowed. Keep existing paper/panel identities and snapshots; do not introduce dataset, study, journal-metric, acquisition, job or benchmark tables here.
 
 Work sequence:
 
@@ -423,6 +463,8 @@ Work sequence:
 **Existing modules:** `config.py`, store, CLI, statistics filtering and state API.  
 **Files:** create `studies.py`, `manifests.py`, `schemas/study.schema.json`, `schemas/manifest.schema.json`, `tests/test_studies.py`, `tests/test_manifests.py`; add the corresponding migration.  
 **Compatibility:** old `Study` and `collect` options map to a legacy Flagship preset; `real/demo` aliases remain. Invalid datasets become errors rather than silently selecting real data.
+
+**Schema boundary:** add only the PR 03 membership/identity/manifest tables listed in §6 and bindings consumed by these paths. Acquisition/assets/jobs/validation remain owned by later PRs.
 
 Work sequence:
 
@@ -446,10 +488,10 @@ Work sequence:
 
 1. Add validated CSV/JSON ingestion, source/hash/rights provenance and ISSN alias matching.
 2. Preserve duplicate/conflict reports; do not choose an arbitrary metric source or newest year.
-3. Implement explicit metric/year/operator/value/missing-policy evaluation and show unresolved coverage.
+3. Implement explicit metric-year/source-release/operator/value/missing-policy evaluation and show unresolved coverage. Generate and display the exact snapshot-based population statement in §5; keep publication-year matching deferred.
 4. Restrict exported numeric metrics according to the authorized import's redistribution policy.
 
-**Tests:** no threshold, `>3`, `>5`, `>10`, custom, equals-boundary, missing/NaN/negative values, conflicting aliases/sources/years and schema-invalid files.  
+**Tests:** no threshold, `>3`, `>5`, `>10`, custom, equals-boundary, missing/NaN/negative values, conflicting aliases/sources/years and schema-invalid files; separate metric/release years and exact manifest/UI wording for the 2023–2025/2025-JIF/2026-release example.  
 **Acceptance:** eligibility can be reproduced from an imported file hash and rule; no fabricated values, hidden metric replacement or JIF-dependent quality scoring exists.
 
 ### PR 05 — Discovery/eligibility/acquisition separation
@@ -480,12 +522,12 @@ Work sequence:
 Work sequence:
 
 1. Freeze a candidate snapshot and reproducible broad-subject mapping with an unclassified category.
-2. Calculate year×subject allocations, journal cap feasibility and deterministic priorities/reserve order from the saved seed.
+2. Calculate equal-year/proportional-subject allocations, the single generous journal cap's feasibility and deterministic priorities/reserve order from the saved seed. Save pilot-yield-based reserve budget; report frame versus sample composition without extra subject ceilings or minimum quotas.
 3. Record every selected/replaced/unfulfilled position and its reason. Refuse infeasible silent cap changes and post-extraction easy-case substitution.
 4. Export frame, allocation, primary/reserve selections and cohort coverage. Separate target, acquired and analysis-ready counts.
 5. Run a small acquisition pilot and estimate yield/storage. Execute the substantial Core acquisition only after PR 07's recovery path and PR 08's eligibility/benchmark safeguards pass; release acceptance belongs to PR 09. Aim for approximately 500 eligible acquired papers or report the actual pending/failed/shortfall cohort. This is future implementation work, not acquisition performed by this review.
 
-**Tests:** same seed/frame identical selection, provider-order invariance, different-seed behavior, capped/sparse/empty strata, missing subjects/metrics, duplicate identifiers, deterministic replacement and impossible target.  
+**Tests:** same seed/frame identical selection, provider-order invariance, different-seed behavior, capped/sparse/empty strata, missing subjects/metrics, duplicate identifiers, deterministic replacement and impossible target. Changing only figure count, appearance, palette or machine-readability must leave the paper draw unchanged; no-analyzable-figure cases stay missing analysis.  
 **Acceptance:** saved frame and parameters reproduce exact selection; no journal exceeds the configured feasible cap; no stage presents failed/pending cases as analyzed papers; no unjustified sampling weights are emitted.
 
 ### PR 07 — Durable single-worker jobs and paginated corpus UI
@@ -517,12 +559,12 @@ Work sequence:
 
 1. Define ground-truth schema and source-coordinate conventions for boundaries/type/encoding/colors/roles/legend evidence.
 2. Generate diagnostic charts with renderer-derived ground truth and nuisance variations; verify annotation masks/boxes against rendered output.
-3. Pre-annotate and curate the initial 200–500 real-panel benchmark; freeze paper-disjoint development/calibration/test roles and duplicate groups.
+3. Pre-annotate and curate a 100–150-panel pilot; freeze paper-disjoint development/calibration/test roles and duplicate groups. Record unsupported strata and interval widths; expand selectively toward approximately 300 only under the §9 protocol.
 4. Evaluate the existing baselines on development/calibration examples; preserve error cases and unknowns. Keep the final test isolated from tuning.
 5. Publish a machine-readable baseline report and reviewer-effort measurements; add confidence fields without inventing calibrated automatic acceptance.
 
 **Tests:** perfect prediction metric cases, false/missed colors, unmatched panels, empty classes, uncertain truth, duplicate-paper split leaks, renderer geometry and cross-dataset test exclusion.  
-**Acceptance:** versioned benchmark/labels/protocol can rerun offline; synthetic and real results are separate; no locked-test example can enter training/active learning; published baseline includes all requested measurable task dimensions or explicitly unavailable stages.
+**Acceptance:** the 100–150-panel pilot and versioned benchmark/labels/protocol can rerun offline; synthetic and real results are separate; no locked-test example can enter training/active learning; published baseline includes all requested measurable task dimensions or explicitly unavailable stages. Completion of approximately 300 panels is not a v0.2 gate, and the pilot does not authorize HIGH automatic inclusion.
 
 ### PR 09 — Release documentation, governance and capacity acceptance
 
@@ -550,7 +592,7 @@ Work sequence:
 - Metrics rules are configurable and traceable; no authorized metrics means no pretend `>5` result.
 - Frozen frame/seed/allocations reproduce the draw and reserve exactly.
 - Approximately 500 eligible acquired papers are documented, or a transparent shortfall is reported without claiming target achievement.
-- Benchmark framework and split isolation are operational; real benchmark size/label completion is reported separately from software completion.
+- Benchmark framework, paper-disjoint split isolation and the 100–150-panel pilot baseline are operational; expansion toward approximately 300 is justified separately by support/uncertainty and does not block other v0.2 work. A smaller/incomplete pilot is labeled explicitly.
 - Result/review history, manifests and a durable single-worker job path exist before broad automated reanalysis.
 - CI and migration/legacy/security tests pass. Core acquisition does **not** imply that all Core panels are validated or statistically accepted.
 
@@ -566,7 +608,7 @@ The user's sequence is sensible. Move manifests/history/validation contracts int
 | **v0.3 gate: precision** | Quantify extraction accuracy and acceptance coverage | Automatic acceptance limited to validated input/task subsets | New extraction improves paired real development metrics versus baseline without material regression on protected cases; task confidence measured, not a blanket vector HIGH |
 | **v0.4 / PR 13: panel detector fusion** | Fix gutter-only limitations; affects `figures.py`/panel-set/history UI | Baseline and reviewed boundaries retained | Exhaustive figure labels, IoU/split/merge cases; proposed supported-case recall ≥0.90 at IoU≥0.5 and median IoU≥0.85; reviewed sets never silently replaced |
 | **v0.4 / PR 14: multimodal classification/eligibility** | Broaden classes and evidence; affects `classify.py`, eligibility/results | Subtypes additive; broad kind mapping maintained | Paper-disjoint precision/F1/calibration and per-type confusion/support; proposed macro-F1 ≥0.85 for sufficiently supported chart classes; unsupported classes abstain |
-| **v0.4 / PR 15: fusion, QC and active learning** | Reduce manual effort with audited error control; affects reviews/statistical acceptance | New explicit acceptance source; legacy reviewed-only selectable | Disagreement, missing evidence, subgroup shifts, queue/split leaks; automatic task correctness target ≥98% with justified confidence bound; report review rate at that accuracy and never lower safety thresholds solely to reach a review-rate target |
+| **v0.4 / PR 15: fusion, QC and active learning** | Reduce manual effort with audited error control; affects reviews/statistical acceptance | New explicit acceptance source; legacy reviewed-only selectable | Disagreement, missing evidence, subgroup shifts, queue/split leaks; the preregistered §7 paper-level exact lower bound must strictly exceed 0.98 before each task/class HIGH policy is enabled; multiplicity, fixed evaluation and QC coverage are recorded; report review rate at that accuracy and never lower safety thresholds solely to reach a review-rate target |
 | **v0.5 / PR 16: scientific comparisons and uncertainty** | Journal/year/field/JIF/type statistics with defensible denominators; affects `statistics.py`, exports/atlas | New run-scoped result fields; old count fields preserved/labeled | Paper votes and missingness tests; clustered/stratified uncertainty; prespecified threshold sensitivity; every estimate carries numerator, denominator, scope, acceptance coverage and sampling limitations |
 | **v0.5 / PR 17: reproducible validated corpus release** | Turn acquired Core into frozen analysis-ready research outputs; affects manifests/validation/docs | Versioned corpus and analyses, never mutable prior release | Reproduce result hashes/membership from cached inputs; paper/duplicate isolation; formal report with algorithm comparisons, source failures and corrected/QC burden |
 | **v0.6 / PR 18: suitability and Pareto views** | Separate popularity from context suitability; affects `recommend.py`/recommendation UI | Preserve named `baseline-v0.1` formula; new views additive | Locked/avoided colors, encoding/marks/background, CVD/grayscale, screen/print fixtures; no constraint violations; trade-offs expose dimensions and reference provenance |
@@ -713,13 +755,13 @@ PMC explicitly warns that even OA/public-domain articles can include third-party
 
 - Dataset/study version, sources/query, exact dates and publication-date interpretation.
 - Strict experimental eligibility policy, mixed-study handling, evidence thresholds and missing/ambiguous rules.
-- JIF enabled/disabled, metric identity, year/source/import hash, comparison operator/value, missing policy.
+- JIF enabled/disabled, metric identity/year, source-release year/edition/version/import hash, comparison operator/value, missing policy and exact population statement.
 - Published/manuscript/preprint/retraction rules, reuse actions, main/supplementary scope.
-- Subject mapping/taxonomy, strata/allocations, journal/field caps, target, reserve, replacement rules, random generator/seed.
+- Subject mapping/taxonomy, equal-year/proportional-subject allocations, single journal dominance cap, target, pilot-yield-based reserve budget, replacement reasons/stopping rule, random generator/seed.
 - Acquisition retries/timeouts/rate/size limits, allowed source adapters, snapshot refresh policy and storage budget.
 - Detector/classifier/extractor/backend/model versions, supported classes, coordinate conventions, masks/background/alpha handling.
 - Color metric/space/profile, extraction and family thresholds, ordering/roles, continuous-ramp representation.
-- Confidence calibration/acceptance policy, QC rate/seed, review priorities, benchmark split/group assignments.
+- Confidence calibration/acceptance policy, correctness/estimand, paper-group QC sample/seed, reliability threshold, one-sided alpha/multiplicity/evaluation protocol, review priorities, benchmark split/group assignments and expansion budget.
 - Analysis membership/denominators, manuscript inclusion, uncertainty/resampling seed/count, sensitivity settings.
 - Recommendation constraints/trade-off strategy and export format/profile.
 
@@ -763,7 +805,7 @@ Manifests, immutable history and benchmark isolation precede automation. Origina
 | 13 Raster improvements | §8; PR 12; nuisance/neutral/small-mark tests |
 | 14 Metrics | §8; PR 10; ΔE76 preserved, CIEDE2000 reference tests and versioned thresholds |
 | 15 Synthetic data | §9; PR 08; renderer-derived truth and separate origin/splits |
-| 16 Real benchmark | §9; PR 08; 200–500 hard real panels, paper-group test isolation |
+| 16 Real benchmark | §9; PR 08; 100–150-panel pilot, justified expansion toward ~300 within 200–500, paper-group test isolation |
 | 17 Active learning | §7; PR 15; disagreement/novelty/diversity, no test contamination |
 | 18 Formal validation | §9; PRs 08,10–17,22; task metrics/version comparisons/calibration/review burden |
 | 19 Statistics | §12; PR 16; paper/panel cells, uncertainty, threshold/missingness sensitivity |
